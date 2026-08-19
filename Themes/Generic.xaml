@@ -2,13 +2,125 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="clr-namespace:TokiDockingPane"
-    xmlns:models="clr-namespace:TokiDockingPane.Models">
+    xmlns:models="clr-namespace:TokiDockingPane.Models"
+    xmlns:viewModels="clr-namespace:TokiDockingPane.ViewModels">
 
-    <!--  データツリーを動的にUI（DockingPane）へ変換する再帰のエンジン  -->
+    <!--  =========================================================================  -->
+    <!--  👑 【最外殻統治スタイル】 DockingPaneViewModel をカスタムコントロールとして駆動  -->
+    <!--  =========================================================================  -->
+    <Style TargetType="{x:Type viewModels:DockingPaneViewModel}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type viewModels:DockingPaneViewModel}">
+                    <!--  ★ 開発者様設計の、美しい5列の絶対レイアウトをここにそのまま完全スタック！  -->
+                    <Grid Background="#FF1E1E1E">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!--  🌟 [Column 2] 中央：これまでの最強4分割フォルダツリーを完全結合  -->
+                        <!--  拡張プロパティとして、TemplateBinding で値をダイレクト一本釣りします  -->
+                        <ContentPresenter Grid.Column="2" Content="{TemplateBinding RootDocumentNode}" />
+
+                        <!--  🎯 [Column 3] 右側ツール枠：Docked（ピン留め）状態の時だけ表示  -->
+                        <ContentPresenter
+                            Grid.Column="3"
+                            Width="280"
+                            Content="{TemplateBinding RightToolPane}">
+                            <ContentPresenter.Style>
+                                <Style TargetType="ContentPresenter">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <!--  TemplateBindingの値をトリガーで追跡するためのRelativeSource指定  -->
+                                        <DataTrigger Binding="{Binding RightToolPane.State, RelativeSource={RelativeSource TemplatedParent}}" Value="Docked">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ContentPresenter.Style>
+                        </ContentPresenter>
+
+                        <!--  🎯 [Column 4] 右最外殻：AutoHidden時の「自動隠蔽バー」  -->
+                        <Border
+                            Grid.Column="4"
+                            Width="24"
+                            Background="#FF2D2D30"
+                            BorderBrush="#FF3E3E42"
+                            BorderThickness="1,0,0,0">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding RightToolPane.State, RelativeSource={RelativeSource TemplatedParent}}" Value="AutoHidden">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+
+                            <Button
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Content="{Binding RightToolPane.Title, RelativeSource={RelativeSource TemplatedParent}}"
+                                FontSize="11"
+                                Foreground="#FFDFDFDF">
+                                <Button.LayoutTransform>
+                                    <RotateTransform Angle="90" />
+                                </Button.LayoutTransform>
+                            </Button>
+                        </Border>
+
+                        <!--  👻 [オーバーレイポップアップ]  -->
+                        <Grid
+                            Grid.Column="2"
+                            Width="280"
+                            HorizontalAlignment="Right"
+                            Panel.ZIndex="99">
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding RightToolPane.IsPopupOpened, RelativeSource={RelativeSource TemplatedParent}}" Value="True" />
+                                                <Condition Binding="{Binding RightToolPane.State, RelativeSource={RelativeSource TemplatedParent}}" Value="AutoHidden" />
+                                            </MultiDataTrigger.Conditions>
+                                            <MultiDataTrigger.Setters>
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </MultiDataTrigger.Setters>
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
+                            <DockPanel>
+                                <ContentPresenter Content="{Binding RightToolPane, RelativeSource={RelativeSource TemplatedParent}}" />
+                            </DockPanel>
+                        </Grid>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--  =========================================================================  -->
+    <!--  🌲 【再帰解決エンジン】 具象クラス解決用の DataTemplate をここに配置  -->
+    <!--  =========================================================================  -->
     <DataTemplate DataType="{x:Type models:PaneContentNode}">
         <local:DockingPane />
     </DataTemplate>
 
+    <DataTemplate DataType="{x:Type models:ToolPaneContentNode}">
+        <local:DockingPane />
+    </DataTemplate>
+
+    <!--  (この下に、local:DockingPane の Style セクションがそのまま続きます)  -->
+    <!-- ========================================================================= -->
+    <!-- 🛠️ 【UIコアエンジン】中央ツリーと右ツールペインを1インフラで共通統治         -->
+    <!-- ========================================================================= -->
     <Style TargetType="{x:Type local:DockingPane}">
         <Setter Property="Background" Value="#FF1E1E1E" />
         <Setter Property="BorderBrush" Value="#FF3E3E42" />
@@ -18,83 +130,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type local:DockingPane}">
                     <Grid>
-                        <!-- 【状態②：マルチタブ実体状態（通常フォルダペイン）】 -->
-                        <Border x:Name="LeafVisual" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Visibility="Collapsed">
-                            <DockPanel>
-                                <ItemsControl Background="#FF2D2D30" DockPanel.Dock="Top" ItemsSource="{Binding TabViewModels}">
-                                    <ItemsControl.Template>
-                                        <ControlTemplate TargetType="{x:Type ItemsControl}">
-                                            <Border Background="{TemplateBinding Background}" BorderThickness="0">
-                                                <ScrollViewer x:Name="PART_HeaderScrollViewer" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
-                                                    <ItemsPresenter />
-                                                </ScrollViewer>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </ItemsControl.Template>
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border x:Name="TabItemBorder" Margin="2,2,2,0" Padding="10,5" Background="#FF2D2D30" BorderBrush="#FF3E3E42" BorderThickness="1,1,1,0" CornerRadius="3,3,0,0" Cursor="Hand">
-                                                <TextBlock FontSize="24" Foreground="#FFDFDFDF" Text="{Binding}" />
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-
-                                <Grid x:Name="PART_TabContentContainer" Background="#FF1E1E1E">
-                                    <!-- 高密度ドッキング・インジケータ -->
-                                    <Grid x:Name="PART_DockingIndicator" Width="120" Height="120" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
-                                        <Ellipse Fill="#80000000" Stroke="#FF3E3E42" StrokeThickness="1" />
-                                        <Grid>
-                                            <Border x:Name="PART_IndicatorCenter" Width="24" Height="24" Background="#FF2D2D30" BorderBrush="#FF007ACC" BorderThickness="1" CornerRadius="2">
-                                                <Rectangle Width="12" Height="12" Fill="#FF007ACC" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                            <Border x:Name="PART_IndicatorTop" Width="24" Height="24" Margin="0,4,0,0" VerticalAlignment="Top" Background="#FF2D2D30" BorderBrush="#FF007ACC" BorderThickness="1" CornerRadius="2">
-                                                <Rectangle Width="14" Height="6" Margin="0,3,0,0" VerticalAlignment="Top" Fill="#FF007ACC" />
-                                            </Border>
-                                            <Border x:Name="PART_IndicatorBottom" Width="24" Height="24" Margin="0,0,0,4" VerticalAlignment="Bottom" Background="#FF2D2D30" BorderBrush="#FF007ACC" BorderThickness="1" CornerRadius="2">
-                                                <Rectangle Width="14" Height="6" Margin="0,0,0,3" VerticalAlignment="Bottom" Fill="#FF007ACC" />
-                                            </Border>
-                                            <Border x:Name="PART_IndicatorLeft" Width="24" Height="24" Margin="4,0,0,0" HorizontalAlignment="Left" Background="#FF2D2D30" BorderBrush="#FF007ACC" BorderThickness="1" CornerRadius="2">
-                                                <Rectangle Width="6" Height="14" Margin="3,0,0,0" HorizontalAlignment="Left" Fill="#FF007ACC" />
-                                            </Border>
-                                            <Border x:Name="PART_IndicatorRight" Width="24" Height="24" Margin="0,0,4,0" HorizontalAlignment="Right" Background="#FF2D2D30" BorderBrush="#FF007ACC" BorderThickness="1" CornerRadius="2">
-                                                <Rectangle Width="6" Height="14" Margin="0,0,3,0" HorizontalAlignment="Right" Fill="#FF007ACC" />
-                                            </Border>
-                                        </Grid>
-                                    </Grid>
-                                </Grid>
-                            </DockPanel>
-                        </Border>
-
-                        <!-- 【状態①：2分割コンテナ状態（縦割）】 -->
-                        <Grid x:Name="PART_VerticalSplitGrid" Visibility="Collapsed">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <ContentPresenter Grid.Column="0" Content="{Binding MainChild}" />
-                            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" Background="#FF3E3E42" />
-                            <ContentPresenter Grid.Column="2" Content="{Binding SubChild}" />
-                        </Grid>
-
-                        <!-- 【状態①：2分割コンテナ状態（横割）】 -->
-                        <Grid x:Name="PART_HorizontalSplitGrid" Visibility="Collapsed">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-                            <ContentPresenter Grid.Row="0" Content="{Binding MainChild}" />
-                            <GridSplitter Grid.Row="1" Height="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FF3E3E42" />
-                            <ContentPresenter Grid.Row="2" Content="{Binding SubChild}" />
-                        </Grid>
-
+                        <!-- VisualStateManagerによる超高速レイアウト・ステート統治 -->
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="LayoutStates">
                                 <VisualState x:Name="LeafState">
@@ -121,11 +157,96 @@
                             </VisualStateGroup>
                         </VisualStateManager.VisualStateGroups>
 
+                        <!-- ========================================================================= -->
+                        <!-- 【状態②：マルチタブ実体状態（通常フォルダ ＆ ツール共通枠）】              -->
+                        <!-- ========================================================================= -->
+                        <Border x:Name="LeafVisual" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Visibility="Collapsed">
+                            <DockPanel>
+                                <!-- ★【119行目付近修正】: RootDocumentNode. を完全に撤去し、自身の持つ TabViewModels へ直結 -->
+                                <ItemsControl Background="#FF2D2D30" DockPanel.Dock="Top" ItemsSource="{Binding TabViewModels}">
+                                    <ItemsControl.Template>
+                                        <ControlTemplate TargetType="{x:Type ItemsControl}">
+                                            <Border Background="{TemplateBinding Background}" BorderThickness="0">
+                                                <ScrollViewer x:Name="PART_HeaderScrollViewer" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+                                                    <ItemsPresenter />
+                                                </ScrollViewer>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </ItemsControl.Template>
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border x:Name="TabItemBorder" Margin="2,2,2,0" Padding="10,5" Background="#FF2D2D30" BorderBrush="#FF3E3E42" BorderThickness="1,1,1,0" CornerRadius="3,3,0,0" Cursor="Hand">
+                                                <TextBlock FontSize="24" Foreground="#FFDFDFDF" Text="{Binding}" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <!-- 0msタブ切り替えコアコンテナ -->
+                                <Grid x:Name="PART_TabContentContainer" Background="#FF1E1E1E">
+                                    <!-- 高密度ドッキング・インジケータ -->
+                                    <Grid x:Name="PART_DockingIndicator" Width="120" Height="120" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
+                                        <Ellipse Fill="#80000000" Stroke="#FF3E3E42" StrokeThickness="1" />
+                                        <Grid>
+                                            <Border x:Name="PART_IndicatorCenter" Width="24" Height="24" Background="#FF2D2D30" BorderBrush="#FF007ACC" BorderThickness="1" CornerRadius="2">
+                                                <Rectangle Width="12" Height="12" Fill="#FF007ACC" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <Border x:Name="PART_IndicatorTop" Width="24" Height="24" Margin="0,4,0,0" VerticalAlignment="Top" Background="#FF2D2D30" BorderBrush="#FF007ACC" BorderThickness="1" CornerRadius="2">
+                                                <Rectangle Width="14" Height="6" Margin="0,3,0,0" VerticalAlignment="Top" Fill="#FF007ACC" />
+                                            </Border>
+                                            <Border x:Name="PART_IndicatorBottom" Width="24" Height="24" Margin="0,0,0,4" VerticalAlignment="Bottom" Background="#FF2D2D30" BorderBrush="#FF007ACC" BorderThickness="1" CornerRadius="2">
+                                                <Rectangle Width="14" Height="6" Margin="0,0,0,3" VerticalAlignment="Bottom" Fill="#FF007ACC" />
+                                            </Border>
+                                            <Border x:Name="PART_IndicatorLeft" Width="24" Height="24" Margin="4,0,0,0" HorizontalAlignment="Left" Background="#FF2D2D30" BorderBrush="#FF007ACC" BorderThickness="1" CornerRadius="2">
+                                                <Rectangle Width="6" Height="14" Margin="3,0,0,0" HorizontalAlignment="Left" Fill="#FF007ACC" />
+                                            </Border>
+                                            <Border x:Name="PART_IndicatorRight" Width="24" Height="24" Margin="0,0,4,0" HorizontalAlignment="Right" Background="#FF2D2D30" BorderBrush="#FF007ACC" BorderThickness="1" CornerRadius="2">
+                                                <Rectangle Width="6" Height="14" Margin="0,0,3,0" HorizontalAlignment="Right" Fill="#FF007ACC" />
+                                            </Border>
+                                        </Grid>
+                                    </Grid>
+                                </Grid>
+                            </DockPanel>
+                        </Border>
+
+                        <!-- ========================================================================= -->
+                        <!-- 🌲 【状態①：2分割コンテナ状態（縦割）】                                    -->
+                        <!-- ========================================================================= -->
+                        <Grid x:Name="PART_VerticalSplitGrid" Visibility="Collapsed">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <!-- ★【188行目、190行目修正】: RootDocumentNode. を完全に撤去し、ピュアに自身の子へ直結 -->
+                            <ContentPresenter Grid.Column="0" Content="{Binding MainChild}" />
+                            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" Background="#FF3E3E42" />
+                            <ContentPresenter Grid.Column="2" Content="{Binding SubChild}" />
+                        </Grid>
+
+                        <!-- ========================================================================= -->
+                        <!-- 🌲 【状態①：2分割コンテナ状態（横割）】                                    -->
+                        <!-- ========================================================================= -->
+                        <Grid x:Name="PART_HorizontalSplitGrid" Visibility="Collapsed">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <!-- ★【超核心修正】：こちらも大文字の『MainChild』『SubChild』へ完全修正！！ -->
+                            <ContentPresenter Grid.Row="0" Content="{Binding MainChild}" />
+                            <GridSplitter Grid.Row="1" Height="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FF3E3E42" />
+                            <ContentPresenter Grid.Row="2" Content="{Binding SubChild}" />
+                        </Grid>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
-
 
 </ResourceDictionary>

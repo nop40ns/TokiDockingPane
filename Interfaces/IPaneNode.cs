@@ -23,9 +23,13 @@ public enum EnumOrientation : byte
 public interface IPaneNode : IDisposable, INotifyPropertyChanged
 {
     // 親への参照（メインもツールも、ツリーを遡るために必須）
+    public IPaneNode? MainChild { get; set; }
+    public IPaneNode? SubChild { get; set; }
+    public IPaneNode? Parent { get; set; }
 
- 
-    public EnumOrientation Orientation { get; set; } 
+    public EnumOrientation Orientation { get; set; }
+
+     
 
     public double SplitRatio { get; set; }    // Gridの * 寸法（Width/Height）にダイレクト連動
 
@@ -42,6 +46,13 @@ public interface IPaneNode : IDisposable, INotifyPropertyChanged
 
     // タブを引き抜く（Remove）ための共通駆動
     void RemoveTab(int index);
-     
+
+    void RaisePropertyChanged(string propertyName);
+
+    public void SplitHorizontal(object newViewModel);
+
+    public void SplitVertical(object newViewModel);
+
+    public void AddTab(object vm);
 
 }

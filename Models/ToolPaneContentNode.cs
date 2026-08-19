@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using TokiDockingPane.Interfaces;
 
 namespace TokiDockingPane.Models;
@@ -39,6 +41,10 @@ public partial class ToolPaneContentNode : ObservableObject, IPaneNode
     [ObservableProperty] private string _title = "ツール";
     [ObservableProperty] private EnumToolState _state = EnumToolState.Docked;
     [ObservableProperty] private double _paneSize = 280; // 幅または高さ
+
+    [ObservableProperty] private bool _isPopupOpened = false;
+
+
 
     // インターフェース規定のマルチタブ資産
     [ObservableProperty] private List<object> _tabViewModels = new();
@@ -93,5 +99,101 @@ public partial class ToolPaneContentNode : ObservableObject, IPaneNode
         _parent = null;
         _tabViewModels = null!;
         GC.SuppressFinalize(this);
+    }
+
+
+
+    /// <summary>
+    /// このペインをその場で縦割（左右）コンテナへとトランスフォームさせる（アロケーション最小化）
+    /// </summary>
+    public void SplitVertical(object newViewModel)
+    {
+        // 1. 自身の現在の全タブ資産を引き継ぐ「左側（Main）」のクローンノードを生成
+        var leftNode = new PaneContentNode
+        {
+            TabViewModels = this.TabViewModels, // ポインタの一発譲渡
+            SelectedTabIndex = this.SelectedTabIndex
+        };
+
+        // 2. 新しくドロップされたViewModelを保持する「右側（Sub）」のノードを生成
+        var rightNode = new PaneContentNode(newViewModel);
+
+
+        leftNode.Parent = this;
+        rightNode.Parent = this;
+
+        // 3. 自身のペインデータをクリーンに切断（自身はコンテナ枠へ昇華するため）
+        //this.TabViewModels = null!;
+        this.TabViewModels = new List<object>();
+
+
+        // 4. トポロジーの書き換え ➔ WPF側が感知して一瞬で画面が割れる
+        this.Orientation = EnumOrientation.Vertical;
+        this.MainChild = leftNode;
+        this.SubChild = rightNode;
+
+        OnPropertyChanged(nameof(MainChild));
+        OnPropertyChanged(nameof(SubChild));
+        OnPropertyChanged(nameof(Orientation));
+    }
+
+    /// <summary>
+    /// このペインをその場で横割（上下）コンテナへとトランスフォームさせる
+    /// </summary>
+    public void SplitHorizontal(object newViewModel)
+    {
+        // 1. 自身の現在の全タブ資産を引き継ぐ「上側（Main）」のクローンノードを生成
+        var topNode = new PaneContentNode
+        {
+            TabViewModels = this.TabViewModels,
+            SelectedTabIndex = this.SelectedTabIndex
+        };
+
+        // 2. 新しくドロップされたViewModelを保持する「下側（Sub）」のノードを生成
+        var bottomNode = new PaneContentNode(newViewModel);
+
+        topNode.Parent = this;
+        bottomNode.Parent = this;
+
+        //this.TabViewModels = null!;
+        this.TabViewModels = new List<object>();
+
+
+
+        // 3. トポロジーの書き換え ➔ 上下分割へ
+        this.Orientation = EnumOrientation.Horizontal;
+        this.MainChild = topNode;
+        this.SubChild = bottomNode;
+
+        OnPropertyChanged(nameof(MainChild));
+        OnPropertyChanged(nameof(SubChild));
+        OnPropertyChanged(nameof(Orientation));
+    }
+
+
+
+
+    [RelayCommand]
+    private void TogglePin()
+    {
+        if (State == EnumToolState.Docked)
+        {
+            State = EnumToolState.AutoHidden;
+        }
+        else if (State == EnumToolState.AutoHidden)
+        {
+            State = EnumToolState.Docked;
+        }
+    }
+
+
+    // 🔥【新章】ホバー時に外からポインタ駆動される開閉コマンド
+    [RelayCommand] private void OpenPopup() => IsPopupOpened = true;
+    [RelayCommand] private void ClosePopup() => IsPopupOpened = false;
+
+    public void RaisePropertyChanged(string propertyName)
+    {
+        // CommunityToolkit.Mvvm が裏で自動生成している本物の通知メソッドへそのままアドレスを横流しする
+        this.OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
     }
 }

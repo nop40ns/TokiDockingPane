@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System.ComponentModel;
 using TokiDockingPane.Interfaces;
 
 namespace TokiDockingPane.Models;
@@ -14,13 +15,13 @@ namespace TokiDockingPane.Models;
 public partial class PaneContentNode :ObservableObject , IPaneNode
 {
     [ObservableProperty]
-    private PaneContentNode? _parent;
+    private IPaneNode? _parent;
 
     [ObservableProperty]
-    private PaneContentNode? _mainChild; // Verticalなら「左」、Horizontalなら「上」
+    private IPaneNode? _mainChild; // Verticalなら「左」、Horizontalなら「上」
 
     [ObservableProperty]
-    private PaneContentNode? _subChild;  // Verticalなら「右」、Horizontalなら「下」
+    private IPaneNode? _subChild;  // Verticalなら「右」、Horizontalなら「下」
 
     [ObservableProperty]
     private EnumOrientation _orientation;
@@ -128,11 +129,11 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         // ---------------------------------------------------------------------
         if (TabViewModels.Count == 0 && Parent != null)
         {
-            PaneContentNode currentParent = Parent;     // 自身の親（分割コンテナ）
-            PaneContentNode? grandParent = currentParent.Parent; // 自身の祖父
+            IPaneNode currentParent = Parent;     // 自身の親（分割コンテナ）
+            IPaneNode? grandParent = currentParent.Parent; // 自身の祖父
 
             // 自分の相方（兄弟ノード：消されずに生き残る本物のデータノード）を特定
-            PaneContentNode? sibling = (currentParent.MainChild == this)
+            IPaneNode? sibling = (currentParent.MainChild == this)
                 ? currentParent.SubChild
                 : currentParent.MainChild;
 
@@ -146,12 +147,12 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
                     if (isMainChild)
                     {
                         grandParent.MainChild = null;
-                        grandParent.OnPropertyChanged(nameof(MainChild));
+                        grandParent.RaisePropertyChanged(nameof(MainChild));
                     }
                     else
                     {
                         grandParent.SubChild = null;
-                        grandParent.OnPropertyChanged(nameof(SubChild));
+                        grandParent.RaisePropertyChanged(nameof(SubChild));
                     }
 
                     // 役割を終えた中間のコンテナと自分のリンクを完全切断
@@ -165,16 +166,16 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
                     if (isMainChild)
                     {
                         grandParent.MainChild = sibling;
-                        grandParent.OnPropertyChanged(nameof(MainChild));
+                        grandParent.RaisePropertyChanged(nameof(MainChild));
                     }
                     else
                     {
                         grandParent.SubChild = sibling;
-                        grandParent.OnPropertyChanged(nameof(SubChild));
+                        grandParent.RaisePropertyChanged(nameof(SubChild));
                     }
 
                     // 相方の全プロパティ通知をキックしてWPFを強制再描画
-                    sibling.OnPropertyChanged(string.Empty);
+                    sibling.RaisePropertyChanged(string.Empty);
                 }
                 else
                 {
@@ -200,13 +201,13 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
                     this.Parent = null;
 
 
-                    currentParent.OnPropertyChanged(nameof(currentParent.MainChild));
-                    currentParent.OnPropertyChanged(nameof(currentParent.SubChild));
-                    currentParent.OnPropertyChanged(nameof(currentParent.Orientation));
-                    currentParent.OnPropertyChanged(nameof(currentParent.TabViewModels));
-                    currentParent.OnPropertyChanged(nameof(currentParent.ActiveViewModel));
+                    currentParent.RaisePropertyChanged(nameof(currentParent.MainChild));
+                    currentParent.RaisePropertyChanged(nameof(currentParent.SubChild));
+                    currentParent.RaisePropertyChanged(nameof(currentParent.Orientation));
+                    currentParent.RaisePropertyChanged(nameof(currentParent.TabViewModels));
+                    currentParent.RaisePropertyChanged(nameof(currentParent.ActiveViewModel));
                     // 親コンテナ側の通知を撃ち、Gridを詰め直させる
-                    currentParent.OnPropertyChanged(string.Empty);
+                    currentParent.RaisePropertyChanged(string.Empty);
                 }
             }
             return;
@@ -247,14 +248,14 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     public void SplitVertical(object newViewModel)
     {
         // 1. 自身の現在の全タブ資産を引き継ぐ「左側（Main）」のクローンノードを生成
-        var leftNode = new PaneContentNode
+        IPaneNode leftNode = new PaneContentNode
         {
             TabViewModels = this.TabViewModels, // ポインタの一発譲渡
             SelectedTabIndex = this.SelectedTabIndex
         };
 
         // 2. 新しくドロップされたViewModelを保持する「右側（Sub）」のノードを生成
-        var rightNode = new PaneContentNode(newViewModel);
+        IPaneNode rightNode = new PaneContentNode(newViewModel);
 
 
         leftNode.Parent = this;
@@ -281,14 +282,14 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     public void SplitHorizontal(object newViewModel)
     {
         // 1. 自身の現在の全タブ資産を引き継ぐ「上側（Main）」のクローンノードを生成
-        var topNode = new PaneContentNode
+        IPaneNode topNode = new PaneContentNode
         {
             TabViewModels = this.TabViewModels,
             SelectedTabIndex = this.SelectedTabIndex
         };
 
         // 2. 新しくドロップされたViewModelを保持する「下側（Sub）」のノードを生成
-        var bottomNode = new PaneContentNode(newViewModel);
+        IPaneNode bottomNode = new PaneContentNode(newViewModel);
 
         topNode.Parent = this;
         bottomNode.Parent = this;
@@ -307,5 +308,9 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         OnPropertyChanged(nameof(SubChild));
         OnPropertyChanged(nameof(Orientation));
     }
-
+    public void RaisePropertyChanged(string propertyName)
+    {
+        // CommunityToolkit.Mvvm が裏で自動生成している本物の通知メソッドへそのままアドレスを横流しする
+        this.OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
+    }
 }

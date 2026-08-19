@@ -75,7 +75,7 @@ public class DockingPane : ContentControl
 
     private void OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (!(this.DataContext is PaneContentNode node) || node.MainChild != null) return;
+        if (!(this.DataContext is IPaneNode node) || node.MainChild != null) return;
 
         var hitElement = e.OriginalSource as DependencyObject;
         if (hitElement == null) return;
@@ -197,7 +197,7 @@ public class DockingPane : ContentControl
     /// </summary>
     private void OnDockingPaneDrop(object sender, DragEventArgs e)
     {
-        if (!(this.DataContext is PaneContentNode targetNode) || targetNode.MainChild != null) return;
+        if (!(this.DataContext is IPaneNode targetNode) || targetNode.MainChild != null) return;
         if (!(e.Data.GetData(typeof(TokiDragDropPayload)) is TokiDragDropPayload payload)) return;
 
         PaneContentNode sourceNode = payload.SourceNode;
@@ -333,8 +333,21 @@ public class DockingPane : ContentControl
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
         if (e.OldValue == e.NewValue) return;
-        if (e.OldValue is PaneContentNode oldNode) oldNode.PropertyChanged -= OnNodePropertyChanged;
-        if (e.NewValue is PaneContentNode newNode) newNode.PropertyChanged += OnNodePropertyChanged;
+
+        // ★【核心の修正：キャスト先を具象型からインターフェース『IPaneNode』へ完全修正！】
+        // これにより、PaneContentNodeでもToolPaneContentNodeでも、
+        // どのようなデータノードが結合されても100%確実にイベントハンドラが結線されます。
+        if (e.OldValue is IPaneNode oldNode)
+        {
+            oldNode.PropertyChanged -= OnNodePropertyChanged;
+        }
+
+        if (e.NewValue is IPaneNode newNode)
+        {
+            newNode.PropertyChanged += OnNodePropertyChanged;
+        }
+
+        // 描画リフレッシュ（QueueRefreshVisualState）を最速で叩き起こす！
         QueueRefreshVisualState();
     }
 
@@ -377,7 +390,7 @@ public class DockingPane : ContentControl
 
         this.Dispatcher.BeginInvoke(new Action(() =>
         {
-            if (this.Template == null || !(this.DataContext is PaneContentNode node)) return;
+            if (this.Template == null || !(this.DataContext is IPaneNode node)) return;
 
             if (node.MainChild != null)
             {
