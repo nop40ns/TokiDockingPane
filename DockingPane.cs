@@ -42,6 +42,7 @@ public class DockingPane : ContentControl
     private Border? _horizontalSplitterIndicator;
 
     private Grid? _toolHeader;
+     
 
 
     static DockingPane()
@@ -93,9 +94,14 @@ public class DockingPane : ContentControl
         _verticalSplitterIndicator = GetTemplateChild("PART_VerticalSplitterIndicator") as Border;
         _horizontalSplitterIndicator = GetTemplateChild("PART_HorizontalSplitterIndicator") as Border;
 
+         
 
         QueueRefreshVisualState();
     }
+
+  
+
+
 
     // ツール移動用のマウス座標キャッシュ変数
     private Point _toolDragStartPoint;

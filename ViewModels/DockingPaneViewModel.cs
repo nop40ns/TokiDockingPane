@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using TokiDockingPane.Interfaces;
 using TokiDockingPane.Models;
 
@@ -59,7 +60,45 @@ namespace TokiDockingPane.ViewModels
             this.DragOver += OnOuterDragOver;
             this.DragLeave += OnOuterDragLeave;
             this.Drop += OnOuterDrop;
+            this.PreviewMouseDown += OnPreviewMouseDown;
+ 
         }
+
+        private void OnPreviewMouseDown(object sender, MouseEventArgs  e)
+        {
+            if (this.RightToolPane == null || this.RightToolPane.IsPopupOpened == false) return;
+
+            // 🌟【大核心】：クリックされた最末尾の具象要素（TextBlock等）を正確に一本釣り！
+            if (e.OriginalSource is System.Windows.DependencyObject clickedElement)
+            {
+                bool isClickInsidePopup = false;
+
+                // クリックされた要素から、ビジュアルツリーを上に向かって親玉（Parent）へ遡上
+                System.Windows.DependencyObject? current = clickedElement;
+                while (current != null)
+                {
+                    // 遡る途中で、右ツールペインのポップアップ外枠である Grid（Name="PART_RightToolPopup"）に到達した場合
+                    if (current is System.Windows.Controls.Grid grid && grid.Name == "PART_RightToolPopup")
+                    {
+                        isClickInsidePopup = true; // ポップアップの内側（中身）をクリックしたと確定！
+                        break;
+                    }
+
+                    // 🌟【WPF絶対規則】：ビジュアルツリーの親要素を1階層上に安全に登る
+                    current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+                }
+
+                // 🎯【外側確定クリック】：もしクリックされた座標が、ポップアップの領土の外（4画面やタブ）だった場合！
+                if (!isClickInsidePopup)
+                {
+                    // 0msでデータモデル側の IsPopupOpened を False へ直接叩き落とす！
+                    // これにより最外殻の通常トリガーが連動し、Popupが「シュッ」と安全格納されます！
+                    this.RightToolPane.IsPopupOpened = false;
+                }
+            }
+        }
+       
+
 
         public override void OnApplyTemplate()
         {
