@@ -1,49 +1,185 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Controls;
-using CommunityToolkit.Mvvm.ComponentModel;
 using TokiDockingPane.Interfaces;
 using TokiDockingPane.Models;
 
-namespace TokiDockingPane.ViewModels;
-
-/// <summary>
-/// 👑 【最外殻統治コントロール】
-/// 5列のVS風レイアウトをライブラリ側で安全に駆動するための、外殻カスタムコントロール
-/// </summary>
-public class DockingPaneViewModel : Control
+namespace TokiDockingPane.ViewModels
 {
-    // 依存関係プロパティ（DependencyProperty）として定義することで、WPFのXAMLと100%直結します
-    public static readonly DependencyProperty RootDocumentNodeProperty =
-        DependencyProperty.Register(nameof(RootDocumentNode), typeof(IPaneNode), typeof(DockingPaneViewModel), new PropertyMetadata(null));
-
-    public static readonly DependencyProperty RightToolPaneProperty =
-        DependencyProperty.Register(nameof(RightToolPane), typeof(ToolPaneContentNode), typeof(DockingPaneViewModel), new PropertyMetadata(null));
-
-    public IPaneNode RootDocumentNode
+    /// <summary>
+    /// 👑 【最外殻統治コントロール】
+    /// 画面全体を横断するアウタードッキング（青線・赤線）を完全に支配するカスタムコントロール
+    /// </summary>
+    [TemplatePart(Name = "PART_OuterDockingIndicator", Type = typeof(Grid))]
+    [TemplatePart(Name = "PART_OuterTop", Type = typeof(Border))]
+    [TemplatePart(Name = "PART_OuterRight", Type = typeof(Border))]
+    public class DockingPaneViewModel : Control
     {
-        get => (IPaneNode)GetValue(RootDocumentNodeProperty);
-        set => SetValue(RootDocumentNodeProperty, value);
-    }
+        public static readonly DependencyProperty RootDocumentNodeProperty =
+            DependencyProperty.Register(nameof(RootDocumentNode), typeof(IPaneNode), typeof(DockingPaneViewModel), new PropertyMetadata(null));
 
-    public ToolPaneContentNode RightToolPane
-    {
-        get => (ToolPaneContentNode)GetValue(RightToolPaneProperty);
-        set => SetValue(RightToolPaneProperty, value);
-    }
+        public static readonly DependencyProperty RightToolPaneProperty =
+            DependencyProperty.Register(nameof(RightToolPane), typeof(ToolPaneContentNode), typeof(DockingPaneViewModel), new PropertyMetadata(null));
 
-    static DockingPaneViewModel()
-    {
-        // WPFに対し、Themes/Generic.xaml 内のスタイル（設計図）を見に行くように強制マーク
-        DefaultStyleKeyProperty.OverrideMetadata(typeof(DockingPaneViewModel),
-            new FrameworkPropertyMetadata(typeof(DockingPaneViewModel)));
-    }
+        public IPaneNode RootDocumentNode
+        {
+            get => (IPaneNode)GetValue(RootDocumentNodeProperty);
+            set => SetValue(RootDocumentNodeProperty, value);
+        }
 
-    public DockingPaneViewModel(IPaneNode rootDocument, ToolPaneContentNode rightTool)
-    {
-        RootDocumentNode = rootDocument;
-        RightToolPane = rightTool;
-    }
+        public ToolPaneContentNode RightToolPane
+        {
+            get => (ToolPaneContentNode)GetValue(RightToolPaneProperty);
+            set => SetValue(RightToolPaneProperty, value);
+        }
 
-    // 引数なしコンストラクタ（WPFのXAMLデザイナー・初期化用）
-    public DockingPaneViewModel() { }
+        // XAML側の最外殻パーツを一本釣りするためのプライベートポインタ
+        private Grid? _outerDockingIndicator;
+        private Border? _outerTop;
+        private Border? _outerRight;
+
+        static DockingPaneViewModel()
+        {
+            DefaultStyleKeyProperty.OverrideMetadata(typeof(DockingPaneViewModel),
+                new FrameworkPropertyMetadata(typeof(DockingPaneViewModel)));
+        }
+
+        public DockingPaneViewModel(IPaneNode rootDocument, ToolPaneContentNode rightTool)
+        {
+            RootDocumentNode = rootDocument;
+            RightToolPane = rightTool;
+        }
+
+        public DockingPaneViewModel()
+        {
+            // ★【最外殻D&Dインフラの起動】：
+            // 自分自身（画面全体）に対してもWPFのD&D受け入れシグナルを直結します
+            this.AllowDrop = true;
+            this.DragEnter += OnOuterDragEnter;
+            this.DragOver += OnOuterDragOver;
+            this.DragLeave += OnOuterDragLeave;
+            this.Drop += OnOuterDrop;
+        }
+
+        public override void OnApplyTemplate()
+        {
+            base.OnApplyTemplate();
+
+            // XAMLからアウタードッキング用のパーツアドレスをガチッと補獲
+            _outerDockingIndicator = GetTemplateChild("PART_OuterDockingIndicator") as Grid;
+            _outerTop = GetTemplateChild("PART_OuterTop") as Border;
+            _outerRight = GetTemplateChild("PART_OuterRight") as Border;
+        }
+
+        // =========================================================================
+        // 🎯 最外殻アウターインジケーター（青線・赤線用）のリアルタイム表示制御
+        // =========================================================================
+        private void OnOuterDragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(typeof(TokiDragDropPayload)))
+            {
+                if (_outerDockingIndicator != null)
+                {
+                    // ドラッグ中、ウィンドウ内にマウスがいる間は、
+                    // セパレーターの真上に美しい半透明青の「横断ガイドバー」を常時パッと出現させてホールド！
+                    _outerDockingIndicator.Visibility = Visibility.Visible;
+                }
+            }
+        }
+
+        private void OnOuterDragOver(object sender, DragEventArgs e)
+        {
+            if (!e.Data.GetDataPresent(typeof(TokiDragDropPayload))) return;
+
+            // マウスの現在座標が、上バーの真上か、右バーの真上かをOSレベルで一本釣り
+            if (_outerTop != null && _outerTop.IsMouseOver)
+            {
+                // 上バーの上に乗っている時は、ネオンのように高輝度化させるなどの視覚演出フック
+                _outerTop.Opacity = 1.0;
+                if (_outerRight != null) _outerRight.Opacity = 0.4; // 反対側をうっすら暗くして集中させる
+            }
+            else if (_outerRight != null && _outerRight.IsMouseOver)
+            {
+                _outerRight.Opacity = 1.0;
+                if (_outerTop != null) _outerTop.Opacity = 0.4;
+            }
+            else
+            {
+                // どっちのバーの上でもないときは、両方等しくうっすら表示
+                if (_outerTop != null) _outerTop.Opacity = 0.7;
+                if (_outerRight != null) _outerRight.Opacity = 0.7;
+            }
+
+            e.Effects = DragDropEffects.Move;
+            e.Handled = true;
+        }
+
+        private void OnOuterDragLeave(object sender, DragEventArgs e)
+        {
+            // マウスがウィンドウの完全に外へエスケープしたか、ドロップを諦めたら即座に成仏消滅
+            if (_outerDockingIndicator != null && !this.IsMouseOver)
+            {
+                _outerDockingIndicator.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        /// <summary>
+        /// 🚨【新章・アウター横断分割の執行】：
+        /// 最外殻の「上（青線）」または「右（赤線）」のボタン上にドロップされた瞬間、
+        /// ツリー全体のトポロジーを一撃でバキッと組み替える
+        /// </summary>
+        /// <summary>
+        /// 🚨【新章・アウター横断分割の執行確定版】：
+        /// インターフェース（IPaneNode）の窓口をダイレクトに貫通させ、トポロジーをミリ秒で大分割する
+        /// </summary>
+        private void OnOuterDrop(object sender, DragEventArgs e)
+        {
+            if (!(e.Data.GetData(typeof(TokiDragDropPayload)) is TokiDragDropPayload payload)) return;
+
+            IPaneNode sourceNode = payload.SourceNode;
+            object draggedData = payload.DraggedData;
+
+            // マウスが落とされたインジケーターの境界判定
+            if (_outerTop != null && _outerTop.IsMouseOver)
+            {
+                // A. 【青線の場所（アウター上）への着地】
+                if (sourceNode != null && sourceNode.TabViewModels != null)
+                {
+                    int dragIndex = sourceNode.TabViewModels.IndexOf(draggedData);
+                    if (dragIndex >= 0) sourceNode.RemoveTab(dragIndex);
+                }
+
+                // ★【核心修正】：具象クラスへのキャストを完全廃棄！
+                // RootDocumentNode（IPaneNode）が持つアウター分割メソッドをダイレクトに叩き込みます
+                if (RootDocumentNode != null)
+                {
+                    RootDocumentNode.OuterSplitHorizontal(draggedData);
+                }
+            }
+            else if (_outerRight != null && _outerRight.IsMouseOver)
+            {
+                // B. 【赤線の場所（アウター右）への着地】
+                if (sourceNode != null && sourceNode.TabViewModels != null)
+                {
+                    int dragIndex = sourceNode.TabViewModels.IndexOf(draggedData);
+                    if (dragIndex >= 0) sourceNode.RemoveTab(dragIndex);
+                }
+
+                if (RootDocumentNode != null)
+                {
+                    RootDocumentNode.OuterSplitVertical(draggedData);
+                }
+            }
+
+            // 役目を終えたアウターインジケーターを強制非表示化
+            if (_outerDockingIndicator != null)
+            {
+                _outerDockingIndicator.Visibility = Visibility.Collapsed;
+            }
+
+            e.Handled = true;
+        }
+
+
+    }
 }

@@ -13,10 +13,10 @@ namespace TokiDockingPane;
 // ★【一撃必殺のインフラ】WPFの型解決バグを100%封殺するための、型安全なドラッグ専用ポインタコンテナ
 public class TokiDragDropPayload
 {
-    public PaneContentNode SourceNode { get; }
+    public IPaneNode SourceNode { get; }
     public object DraggedData { get; }
 
-    public TokiDragDropPayload(PaneContentNode sourceNode, object draggedData)
+    public TokiDragDropPayload(IPaneNode sourceNode, object draggedData)
     {
         SourceNode = sourceNode;
         DraggedData = draggedData;
@@ -37,6 +37,13 @@ public class DockingPane : ContentControl
 
     private static bool _isGloballyDragging;
 
+    // DockingPane.cs の上部に、仕切り線ガイド用の Border ポインタを2本追加
+    private Border? _verticalSplitterIndicator;
+    private Border? _horizontalSplitterIndicator;
+
+    private Grid? _toolHeader;
+
+
     static DockingPane()
     {
         DefaultStyleKeyProperty.OverrideMetadata(typeof(DockingPane),
@@ -56,11 +63,24 @@ public class DockingPane : ContentControl
         this.DragOver += OnDockingPaneDragOver;
         this.DragLeave += OnDockingPaneDragLeave;
         this.Drop += OnDockingPaneDrop;
+
     }
 
     public override void OnApplyTemplate()
     {
         base.OnApplyTemplate();
+
+        // このDockingPane自身が最外殻コントロール（あるいはその内部）の時、ツールヘッダーのドラッグメッセージを傍受します
+        _toolHeader = GetTemplateChild("PART_ToolHeader") as Grid;
+        if (_toolHeader != null)
+        {
+            _toolHeader.PreviewMouseLeftButtonDown += OnToolHeaderLeftButtonDown;
+            _toolHeader.PreviewMouseMove += OnToolHeaderMouseMove;
+        }
+
+
+
+
         _tabContentContainer = GetTemplateChild("PART_TabContentContainer") as Grid;
         _headerScrollViewer = GetTemplateChild("PART_HeaderScrollViewer") as ScrollViewer;
         _verticalSplitGrid = GetTemplateChild("PART_VerticalSplitGrid") as Grid;
@@ -70,8 +90,88 @@ public class DockingPane : ContentControl
 
         _dockingIndicator.Visibility = Visibility.Collapsed;
 
+        _verticalSplitterIndicator = GetTemplateChild("PART_VerticalSplitterIndicator") as Border;
+        _horizontalSplitterIndicator = GetTemplateChild("PART_HorizontalSplitterIndicator") as Border;
+
+
         QueueRefreshVisualState();
     }
+
+    // ツール移動用のマウス座標キャッシュ変数
+    private Point _toolDragStartPoint;
+    private bool _isToolDragging = false;
+
+    private void OnToolHeaderLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is Grid header && header.Tag is IPaneNode toolNode)
+        {
+            _toolDragStartPoint = e.GetPosition(this);
+            _isToolDragging = true;
+        }
+    }
+
+    /// <summary>
+    /// ★ 核心：右ツールウィンドウをソリューションエクスプローラーのように引き抜いて空中戦を開始する
+    /// </summary>
+    private void OnToolHeaderMouseMove(object sender, MouseEventArgs e)
+    {
+        if (!_isToolDragging || e.LeftButton != MouseButtonState.Pressed) return;
+        if (!(sender is Grid header) || !(header.Tag is IPaneNode toolNode)) return;
+
+        Point currentPos = e.GetPosition(this);
+        if (Math.Abs(currentPos.X - _toolDragStartPoint.X) > SystemParameters.MinimumHorizontalDragDistance ||
+            Math.Abs(currentPos.Y - _toolDragStartPoint.Y) > SystemParameters.MinimumVerticalDragDistance)
+        {
+            _isToolDragging = false;
+
+            object? draggedData = toolNode.ActiveViewModel;
+            if (draggedData == null) return;
+
+            // 4画面中央の仕切り線バー（Indicator）たちを一斉に Visible 臨戦態勢へ！
+            IPaneNode? rootNode = toolNode;
+            while (rootNode?.Parent != null) rootNode = rootNode.Parent;
+            rootNode?.ClearAllIndicators();
+
+            // 144Hzでの空中戦用ペイロードのパッキング（ツールノード自身をSourceとして手渡す）
+            var payload = new TokiDragDropPayload(toolNode, draggedData);
+
+            // =========================================================================
+            // 🛑 WPF同期ロック：仕切り線や4画面の中にドロップされるまでここでホールドされます
+            // =========================================================================
+            DragDropEffects result = DragDrop.DoDragDrop(header, payload, DragDropEffects.Move);
+
+            // =========================================================================
+            // 🚀【開発者様ビルドの空中射出エンジン連動】：
+            // 4画面の中にも仕切り線の真上にも落とされず、何もない空中で指が離された（result == None）その瞬間に、
+            // ツールペインの実体を保持する子ウィンドウ（FloatWindow）を一撃で空中に顕現させる！
+            // =========================================================================
+            if (result == DragDropEffects.None)
+            {
+                Point mouseScreenPos = PointToScreen(Mouse.GetPosition(this));
+
+                // 1. 【先攻引き抜き】：ツールノード側からタブ（中身）を引き抜いて、Stateを自動隠蔽（AutoHidden）に落とす
+                int dragIndex = toolNode.TabViewModels.IndexOf(draggedData);
+                if (dragIndex >= 0)
+                {
+                    toolNode.RemoveTab(dragIndex); // これによって右スロットが0msで「きゅっ」と格納されて消えます！
+                }
+
+                // 2. 【ポインタ移送 ＆ 空中展開】：
+                // 引き抜いたツールのViewModelデータを保持する新しい孤立ノードを生成し、子ウィンドウを顕現！
+                var floatNode = new PaneContentNode(draggedData);
+                var floatWindow = new TokiDockingPane.Views.FloatWindow(floatNode);
+
+                floatWindow.Left = mouseScreenPos.X - 100;
+                floatWindow.Top = mouseScreenPos.Y - 15;
+                floatWindow.Show();
+                floatWindow.Focus();
+            }
+
+            // 空中戦の終了に伴い、すべての仕切り線バーを一斉消灯
+            rootNode?.ClearAllIndicators();
+        }
+    }
+
 
     private void OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
@@ -106,7 +206,14 @@ public class DockingPane : ContentControl
             object? draggedData = sourceNode.ActiveViewModel;
             if (draggedData == null) return;
 
-            var payload = new TokiDragDropPayload(sourceNode, draggedData);
+            // ➔ 【新章：仕切り線バーの一斉点火】
+            // 自分が所属している「親コンテナ（GridSplitterを抱えている部屋）」をツリーから遡及探索し、
+            // その親コンテナが内包している仕切り線ガイドバーをダイレクトに『Visible（表示）』へ叩き起こします！
+            DockingPane? parentPane = FindParent<DockingPane>(this);
+            if (parentPane != null)
+            {
+                parentPane.ShowSplitterIndicators(true);
+            }
 
             // ➔ 【空中戦開始】：自分の部屋のインジケータを一瞬Visibleの準備状態にする
             if (_dockingIndicator != null)
@@ -114,11 +221,15 @@ public class DockingPane : ContentControl
                 _dockingIndicator.Visibility = Visibility.Visible;
                 Debug.WriteLine("ここで表示");
             }
+
+            var payload = new TokiDragDropPayload(sourceNode, draggedData);
+
             // =========================================================================
             // 🛑 WPF同期ホールド：ドロップ先がすべての処理を終えるまで、この行でスレッドがロックされます
             // =========================================================================
             DragDropEffects result = DragDrop.DoDragDrop(this, payload, DragDropEffects.Move);
 
+            // 🌟【完全ホールド】：開発者様ビルドの最強フローティングウィンドウ射出エンジン
             if (result == DragDropEffects.None)
             {
                 // マウスの現在位置（スクリーン絶対座標）を0msキャプチャ
@@ -145,6 +256,9 @@ public class DockingPane : ContentControl
                 }
             }
 
+            // =========================================================================
+            // 🎉 【ドロップ完了時の後攻クリーンアップ】
+            // =========================================================================
             this.Dispatcher.BeginInvoke(new Action(() =>
             {
                 if (_dockingIndicator != null)
@@ -152,14 +266,136 @@ public class DockingPane : ContentControl
                     _dockingIndicator.Visibility = Visibility.Collapsed;
                     Debug.WriteLine("➔ [DEBUG] ★最終執行：WPFの遅延更新を完全に上書きして非表示化！");
                 }
-            }), DispatcherPriority.Render);
 
+                // ★【究極の修正】：役目を終えた仕切り線バーを、親コンテナから安全に完全消滅（Collapsed）させる
+                DockingPane? parentPane = FindParent<DockingPane>(this);
+                if (parentPane != null)
+                {
+                    parentPane.ShowSplitterIndicators(false);
+                }
+            }), DispatcherPriority.Render);
         }
     }
 
+    // DockingPane.cs の内部へ追記
+    /// <summary>
+    /// ★ 外部（子ノード）のドラッグモーションと完全同期して、自身の仕切り線バーを浮かび上がらせる窓口
+    /// </summary>
+    public void ShowSplitterIndicators(bool show)
+    {
+        var targetVisibility = show ? Visibility.Visible : Visibility.Collapsed;
+
+        if (_verticalSplitterIndicator != null) _verticalSplitterIndicator.Visibility = targetVisibility;
+        if (_horizontalSplitterIndicator != null) _horizontalSplitterIndicator.Visibility = targetVisibility;
+    }
+
+
+    /// <summary>
+    /// ★ 究極のUX：ドラッグ中にマウスが「本物の仕切り線」の真上に乗った瞬間だけ、青いバーを完全追従表示させる
+    /// </summary>
+    /// <summary>
+    /// ★ 究極の自由分割UX：親の分割コンテナGrid（PART_VerticalSplitGrid等）をレイキャストで一本釣りし、
+    /// マウスが仕切り線（GridSplitter）の付近に侵入した瞬間、吸い付くように青いバーを完全点火させる
+    /// </summary>
+    /// <summary>
+    /// ★ 究極解決：マウスが GridSplitter 自体に重なった瞬間、同じ部屋のインジケーターを Visible に点火する
+    /// </summary>
     private void OnDockingPaneDragOver(object sender, DragEventArgs e)
     {
-        if (!e.Data.GetDataPresent(typeof(TokiDragDropPayload)) || !(this.DataContext is PaneContentNode node) || node.MainChild != null) return;
+
+
+
+        if (!e.Data.GetDataPresent(typeof(TokiDragDropPayload)) || !(this.DataContext is IPaneNode node)) return;
+
+        // 1. 🎯【開発者様の大正解規律】：マウス直下にある本物の GridSplitter の名前をレイキャストで一本釣り！
+        Point localPos = e.GetPosition(this);
+        string hitSplitterName = string.Empty;
+        FrameworkElement? hitSplitterElement = null;
+
+        VisualTreeHelper.HitTest(this,
+            null,
+            new HitTestResultCallback(result =>
+            {
+                var element = result.VisualHit as FrameworkElement;
+                while (element != null)
+                {
+                    // XAML側でGridSplitterに命名した本物の名前をピンポイントキャッチ！
+                    if (!string.IsNullOrEmpty(element.Name) &&
+                        (element.Name == "PART_VerticalSplitBar" || element.Name == "PART_HorizontalSplitBar"))
+                    {
+                        hitSplitterName = element.Name;
+                        hitSplitterElement = element; // 同じ Grid 内の Indicator を探すためのポインタをホールド
+                        return HitTestResultBehavior.Stop;
+                    }
+                    element = VisualTreeHelper.GetParent(element) as FrameworkElement;
+                }
+                return HitTestResultBehavior.Continue;
+            }),
+            new PointHitTestParameters(localPos));
+
+
+
+
+        // 2. 🔥【判定執行】：GridSplitter の上に乗った瞬間だけ、同じ部屋の Indicator を最速点火！
+        if (hitSplitterElement != null)
+        {
+
+
+            IPaneNode? rootNode = node;
+            while (rootNode?.Parent != null)
+            {
+                rootNode = rootNode.Parent; // ツリーの「根（ルート）」に到達するまで高速逆引き
+            }
+
+            if (rootNode != null)
+            {
+                Debug.WriteLine($"{DateTime.Now}:Indicatorを全消去");
+                // ルートノードから、全画面の全コンテナへ向けて一斉消灯命令を乱れ撃ち！
+                rootNode.ClearAllIndicators();
+            }
+
+
+            // ヒットした GridSplitter が所属している「同じ Grid（パネル）」を親として取得
+            var parentGrid = System.Windows.Media.VisualTreeHelper.GetParent(hitSplitterElement) as Grid;
+            if (parentGrid != null)
+            {
+                if (hitSplitterName == "PART_VerticalSplitBar")
+                {
+                    // 同じGrid内にある縦用インジケーターを名前で発掘し、Visible（表示）へ！
+                    var indicator = parentGrid.FindName("PART_VerticalSplitterIndicator") as Border;
+                    if (indicator != null) indicator.Visibility = Visibility.Visible;
+                }
+                else if (hitSplitterName == "PART_HorizontalSplitBar")
+                {
+                    // 同じGrid内にある横用インジケーターを名前で発掘し、Visible（表示）へ！
+                    var indicator = parentGrid.FindName("PART_HorizontalSplitterIndicator") as Border;
+                    if (indicator != null) indicator.Visibility = Visibility.Visible;
+                }
+            }
+        }
+        //else
+        //{
+        //    Debug.WriteLine($"{DateTime.Now}:Indicatorを全消去?");
+
+        //    // =========================================================================
+        //    // 🛡️【最上位ルートノード駆動・一斉消灯インフラの執行】
+        //    // マウスが境界線を越えて別のコンテナへ脱出した瞬間（緑の矢印の移動時）の、残像焼き付きを完全封殺！
+        //    // 自分自身のデータ（node）からParentポインタを遡って最上位（Root）を一本釣りします。
+        //    // =========================================================================
+        //    IPaneNode? rootNode = node;
+        //    while (rootNode?.Parent != null)
+        //    {
+        //        rootNode = rootNode.Parent; // ツリーの「根（ルート）」に到達するまで高速逆引き
+        //    }
+
+        //    if (rootNode != null)
+        //    {
+        //        Debug.WriteLine($"{DateTime.Now}:Indicatorを全消去");
+        //        // ルートノードから、全画面の全コンテナへ向けて一斉消灯命令を乱れ撃ち！
+        //        rootNode.ClearAllIndicators();
+        //    }
+        //}
+
         e.Effects = DragDropEffects.Move;
         e.Handled = true;
     }
@@ -179,15 +415,23 @@ public class DockingPane : ContentControl
         }
     }
 
+ 
     private void OnDockingPaneDragLeave(object sender, DragEventArgs e)
     {
-        if (_dockingIndicator != null)
-        {
-            Debug.WriteLine("出た");
+        if (_dockingIndicator != null) _dockingIndicator.Visibility = Visibility.Collapsed;
 
-            _dockingIndicator.Visibility = Visibility.Collapsed;
+    //    Debug.WriteLine("出た");
+
+
+        // 部屋から去る時は、仕切り線バーのフラグを一斉に強制消滅させる
+        var trueVisualParent = System.Windows.Media.VisualTreeHelper.GetParent(this);
+        DockingPane? parentPane = FindParent<DockingPane>(trueVisualParent);
+        if (parentPane != null)
+        {
+            parentPane.ShowSplitterIndicators(false);
         }
     }
+
 
     /// <summary>
     /// ★ 核心：専用型での一本釣りに切り替え、誤爆ガードを完全に突破するDrop処理
@@ -197,10 +441,10 @@ public class DockingPane : ContentControl
     /// </summary>
     private void OnDockingPaneDrop(object sender, DragEventArgs e)
     {
-        if (!(this.DataContext is IPaneNode targetNode) || targetNode.MainChild != null) return;
+        if (!(this.DataContext is IPaneNode targetNode)) return;
         if (!(e.Data.GetData(typeof(TokiDragDropPayload)) is TokiDragDropPayload payload)) return;
 
-        PaneContentNode sourceNode = payload.SourceNode;
+        IPaneNode sourceNode = payload.SourceNode;
         object draggedData = payload.DraggedData;
 
         // 1. 【自己破壊ガード】最後の1枚しか無い状態で同じ部屋に落とされた場合は完全スルー
@@ -223,8 +467,12 @@ public class DockingPane : ContentControl
                 var element = result.VisualHit as FrameworkElement;
                 while (element != null)
                 {
-                    // XAML側の名前（PART_IndicatorXXX）を遡及探索
-                    if (!string.IsNullOrEmpty(element.Name) && element.Name.StartsWith("PART_Indicator"))
+                    // ★拡張規律：中央の十字インジケータに加え、新設した「仕切り線連動型バー」の名前も一緒に遡及一本釣り！
+                    if (!string.IsNullOrEmpty(element.Name) &&
+                        (element.Name.StartsWith("PART_Indicator") 
+                        || element.Name.StartsWith("PART_SplitterIndicator")
+                        || element.Name .EndsWith ("SplitterIndicator")
+                        ))
                     {
                         targetIndicatorName = element.Name;
                         return HitTestResultBehavior.Stop; // 発見したら即停止
@@ -235,7 +483,116 @@ public class DockingPane : ContentControl
             }),
             new PointHitTestParameters(localPos));
 
+
+        if (sourceNode == targetNode.MainChild || sourceNode == targetNode.SubChild)
+        {
+            e.Handled = true;
+            return;
+        }
+
         // 3. 【先攻引き抜き】：トポロジー変更前に、ドラッグ元からタブを消去しツリーを緊縮
+        if (sourceNode != null && sourceNode.TabViewModels != null)
+        {
+            int dragIndex = sourceNode.TabViewModels.IndexOf(draggedData);
+            if (dragIndex >= 0)
+            {
+                sourceNode.RemoveTab(dragIndex);
+            }
+        }
+        // =========================================================================
+        // 👑【開発者様インライン思想：仕切り線（GridSplitter）上ドロップの完全調停】
+        // 親（trueParent）の有無に依存せず、targetNode（自分自身）をその場でコンテナへと昇華させる！
+        // =========================================================================
+        if (targetIndicatorName == "PART_HorizontalSplitterIndicator" || targetIndicatorName == "PART_VerticalSplitterIndicator")
+        {
+            // 🛠️ 1. 【最速消灯】：まずは表示を最速でクリア
+            if (_dockingIndicator != null) _dockingIndicator.Visibility = Visibility.Collapsed;
+            if (_verticalSplitterIndicator != null) _verticalSplitterIndicator.Visibility = Visibility.Collapsed;
+            if (_horizontalSplitterIndicator != null) _horizontalSplitterIndicator.Visibility = Visibility.Collapsed;
+
+
+            // ★【開発者様の規律】：targetNode が生存しているなら、親の有無に関係なく100%突入！
+            if (targetNode != null)
+            {
+                // =========================================================================
+                // 👑【開発者様設計：スプリッター上ドロップのインイン・トポロジー完全体】
+                // =========================================================================
+                var oldTreeSubClone = new PaneContentNode
+                {
+                    MainChild = targetNode.SubChild?.MainChild, // 安全にSubChild側の資産を引き継ぎ
+                    SubChild = targetNode.SubChild?.SubChild,
+                    Orientation = targetNode.SubChild?.Orientation ?? EnumOrientation.Horizontal,
+                    SplitRatio = targetNode.SubChild?.SplitRatio ?? 0.5,
+                    TabViewModels = targetNode.SubChild?.TabViewModels ?? new List<object>(),
+                    SelectedTabIndex = targetNode.SubChild?.SelectedTabIndex ?? 0
+                };
+
+                // 🛠️ 3. 【新設ペイン（Main用）の生成】
+                var newTopMainNode = new PaneContentNode(draggedData);
+
+                if (newTopMainNode == targetNode.MainChild || newTopMainNode == targetNode.SubChild)
+                    return;
+
+
+                // 🛠️ 4. 核心：targetNode.SubChild（標的の部屋）をコンテナへ昇華させるための型解決
+                var targetSub = targetNode.SubChild;
+                if (targetSub != null)
+                {
+                    // 自身のこれまでのタブ資産をクリーンに初期化
+                    targetSub.TabViewModels = new List<object>();
+                    targetSub.ViewModel = null;
+
+                    // 分割方向を指定（ドロップされたインジケーターに合わせて部屋を割る）
+                    if (targetIndicatorName == "PART_HorizontalSplitterIndicator")
+                    {
+                        targetSub.Orientation = EnumOrientation.Horizontal; // 上下割
+                    }
+                    else if (targetIndicatorName == "PART_VerticalSplitterIndicator")
+                    {
+                        targetSub.Orientation = EnumOrientation.Vertical; // 左右割
+                    }
+
+                    // 🌟【開発者様大正解の差し込み】：Main（上）に新しい赤枠、Sub（下）に元いたペインを引っ越し！
+                    targetSub.MainChild = newTopMainNode;
+                    targetSub.SubChild = oldTreeSubClone;
+
+                    // 親子関係の逆引きポインタも、新設された targetSub の配下へ完璧に再結線！
+                    newTopMainNode.Parent = targetSub;
+                    oldTreeSubClone.Parent = targetSub;
+                }
+
+                // 🛠️ 5. 【後攻引き抜き】：大移動が完了したあと、ドラッグ元の古い部屋からタブを消去
+                if (sourceNode != null && sourceNode.TabViewModels != null)
+                {
+                    int dragIndex = sourceNode.TabViewModels.IndexOf(draggedData);
+                    if (dragIndex >= 0)
+                    {
+                        sourceNode.RemoveTab(dragIndex);
+                    }
+                }
+
+                // 🛠️ 6. 最終点火：最上位から画面全体へ一斉にプロパティ変更通知を撃ち、WPFGridを瞬間再描画！
+                targetNode.RaisePropertyChanged(string.Empty);
+
+            }
+
+            e.Handled = true;
+            return;
+        }
+
+
+        // =========================================================================
+        // 🛡️【個別部屋防衛線】：通常のペイン（部屋の中）に対するドッキング処理に移行する直前で、
+        // 開発者様が敷いた「すでに分割済みのコンテナ内部への誤ドロップを弾くガード」を安全に発動させます！
+        // =========================================================================
+        if (targetNode.MainChild != null)
+        {
+            if (_dockingIndicator != null) _dockingIndicator.Visibility = Visibility.Collapsed;
+            e.Handled = true;
+            return;
+        }
+
+        // 3. 【先攻引き抜き】：（通常部屋ドッキング用）トポロジー変更前に、ドラッグ元からタブを消去しツリーを緊縮
         if (sourceNode != null && sourceNode.TabViewModels != null)
         {
             int dragIndex = sourceNode.TabViewModels.IndexOf(draggedData);
@@ -246,42 +603,34 @@ public class DockingPane : ContentControl
         }
 
         // 4. 【後攻着地】：ヒットしたインジケータの名前に基づき、0msトランスフォームを執行
-        // ※もしインジケータの外（ペインの端など）に落とされた場合は、大まかな座標でフォールバック
         if (targetIndicatorName == "PART_IndicatorTop")
         {
-            // 上分割：新データを「上(Main)」にし、自分を「下(Sub)」へ押し下げる
             targetNode.SplitHorizontal(draggedData);
-            // 🌟上下を逆転させるため、MainとSubを瞬間スライド
             var temp = targetNode.MainChild;
             targetNode.MainChild = targetNode.SubChild;
             targetNode.SubChild = temp;
         }
         else if (targetIndicatorName == "PART_IndicatorBottom")
         {
-            // 下分割：自分を「上(Main)」に残し、新データを「下(Sub)」へ配置
-            targetNode.SplitHorizontal(draggedData); // 反転なしが正解
+            targetNode.SplitHorizontal(draggedData);
         }
         else if (targetIndicatorName == "PART_IndicatorLeft")
         {
-            // 左分割：新データを「左(Main)」にし、自分を「右(Sub)」へ押し出す
             targetNode.SplitVertical(draggedData);
-            // 🌟左右を逆転させるため、MainとSubを瞬間スライド
             var temp = targetNode.MainChild;
             targetNode.MainChild = targetNode.SubChild;
             targetNode.SubChild = temp;
         }
         else if (targetIndicatorName == "PART_IndicatorRight")
         {
-            // 右分割：自分を「左(Main)」に残し、新データを「右(Sub)」へ配置
-            targetNode.SplitVertical(draggedData); // 反転なしが正解
+            targetNode.SplitVertical(draggedData);
         }
         else if (targetIndicatorName == "PART_IndicatorCenter")
         {
-            targetNode.AddTab(draggedData); // タブマージ
+            targetNode.AddTab(draggedData);
         }
         else
         {
-            // 【フォールバック判定】：インジケータ外のペイン端に直接落とされた場合
             double width = this.ActualWidth;
             double height = this.ActualHeight;
             if (localPos.X > width * 0.8) targetNode.SplitVertical(draggedData);
@@ -289,15 +638,13 @@ public class DockingPane : ContentControl
             else targetNode.AddTab(draggedData);
         }
 
-        // 5. 最終執行：インジケータを確実に圧殺
-        if (_dockingIndicator != null)
-        {
-            _dockingIndicator.Visibility = Visibility.Collapsed;
-        }
+        // 5. 最終執行：出現していたすべてのインジケータを確実に一斉成仏
+        if (_dockingIndicator != null) _dockingIndicator.Visibility = Visibility.Collapsed;
+        if (_verticalSplitterIndicator != null) _verticalSplitterIndicator.Visibility = Visibility.Collapsed;
+        if (_horizontalSplitterIndicator != null) _horizontalSplitterIndicator.Visibility = Visibility.Collapsed;
 
         e.Handled = true;
     }
-
 
 
 
@@ -344,6 +691,12 @@ public class DockingPane : ContentControl
 
         if (e.NewValue is IPaneNode newNode)
         {
+            // 🔥【究極の防衛線】：新しく結線する「直前」に、念には念を入れて強制的に一度引き算する！！
+            // もしWPFのリサイクルによって二重にイベントを抱え込んでしまっていても、
+            // この1行によって過去の古いハンドラポインタがメモリから完全に消滅（リセット）されます。
+            newNode.PropertyChanged -= OnNodePropertyChanged;
+
+            // 2. その上で、新しくクリーンな1本だけをカチッと直結！
             newNode.PropertyChanged += OnNodePropertyChanged;
         }
 
@@ -353,14 +706,38 @@ public class DockingPane : ContentControl
 
     private void OnNodePropertyChanged(object sender, PropertyChangedEventArgs e)
     {
-        Debug.WriteLine("OnNodePropertyChanged");
+       // Debug.WriteLine($"{DateTime.Now}:OnNodePropertyChanged");
 
+        if (e.PropertyName == "COMMAND_CLEAR_INDICATORS")
+        {
+            if (_verticalSplitterIndicator != null)
+            {
+                //Debug.WriteLine($"{DateTime.Now}:COMMAND_CLEAR_INDICATORS：_verticalSplitterIndicatorを非表示");
+
+                _verticalSplitterIndicator.Visibility = Visibility.Collapsed;
+            }
+            if (_horizontalSplitterIndicator != null)
+            {
+        //        Debug.WriteLine($"{DateTime.Now}:COMMAND_CLEAR_INDICATORS：_horizontalSplitterIndicatorを非表示");
+
+                _horizontalSplitterIndicator.Visibility = Visibility.Collapsed;
+            }
+            return; // 描画更新（Queue〜）までは走らせずに、消灯だけを最速執行してリターン
+        }
 
         if (e.PropertyName == nameof(PaneContentNode.MainChild) 
             || e.PropertyName == nameof(PaneContentNode.Orientation)
                    ||     e.PropertyName == nameof(PaneContentNode.TabViewModels) // 👈 ★これを1行追記！
 )
         {
+            // 作り直される衝撃波の前に、仕切り線ガイドを強制成仏
+            if (_verticalSplitterIndicator != null)
+            {
+　                _verticalSplitterIndicator.Visibility = Visibility.Collapsed;
+            }
+            if (_horizontalSplitterIndicator != null) _horizontalSplitterIndicator.Visibility = Visibility.Collapsed;
+
+
             QueueRefreshVisualState();
         }
         else if (e.PropertyName == nameof(PaneContentNode.SelectedTabIndex) || e.PropertyName == nameof(PaneContentNode.TabViewModels))
@@ -386,7 +763,7 @@ public class DockingPane : ContentControl
     /// </summary>
     private void QueueRefreshVisualState()
     {
-        Debug.WriteLine("=== [DEBUG] QueueRefreshVisualState 開始 ===");
+      //  DebugDebug.WriteLine("=== [DEBUG] QueueRefreshVisualState 開始 ===");
 
         this.Dispatcher.BeginInvoke(new Action(() =>
         {
@@ -446,13 +823,22 @@ public class DockingPane : ContentControl
                 VisualStateManager.GoToState(this, "LeafState", false);
                 SyncTabVisibility();
 
-                // ★【核心の一撃】
-                // VMSによる親要素の Visible 化が完全に全うされた『最後の最後』に、
-                // C#のポインタからダイレクトにインジケータを『Collapsed（非表示）』に叩き落とします！
-                // これにより、起動時のお節介な巻き込み表示が144Hzの1フレーム以下で完全に破壊・沈黙します。
-                if (_dockingIndicator != null)
+                if (_dockingIndicator != null) _dockingIndicator.Visibility = Visibility.Collapsed;
+
+                // ★新章の点火線：自分が分割されたコンテナ（Parent持ち）の時、
+                // その仕切り線バーのVisibleを最速で開けてドラッグの受け入れ態勢（臨戦態勢）を整える！
+                if (node.Parent != null)
                 {
-                    _dockingIndicator.Visibility = Visibility.Collapsed;
+                    if (_verticalSplitterIndicator != null)
+                    {
+                        //Debug.WriteLine("QueueRefreshVisualState：_verticalSplitterIndicatorを表示");
+                        _verticalSplitterIndicator.Visibility = Visibility.Visible;
+                    }
+                    if (_horizontalSplitterIndicator != null)
+                    {
+                        //Debug.WriteLine("QueueRefreshVisualState：_horizontalSplitterIndicatorを表示");
+                        _horizontalSplitterIndicator.Visibility = Visibility.Visible;
+                    }
                 }
             }
         }), DispatcherPriority.Render);

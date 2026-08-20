@@ -54,5 +54,9 @@ public interface IPaneNode : IDisposable, INotifyPropertyChanged
     public void SplitVertical(object newViewModel);
 
     public void AddTab(object vm);
+    void OuterSplitHorizontal(object newViewModel);
+    void OuterSplitVertical(object newViewModel);
+
+    void ClearAllIndicators();
 
 }

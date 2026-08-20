@@ -313,4 +313,76 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         // CommunityToolkit.Mvvm が裏で自動生成している本物の通知メソッドへそのままアドレスを横流しする
         this.OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
     }
+
+    // PaneContentNode.cs の内部へ追記
+    /// <summary>
+    /// ★ アウタードッキング：現在のツリー全体をまるごと「上側」へ押し込め、下側に新しい部屋を横断展開する（青線）
+    /// </summary>
+    public void OuterSplitHorizontal(object newViewModel)
+    {
+        // 1. 自分自身の現在の全トポロジー子孫（4画面すべて）をそのまま引き継ぐクローンを生成
+        var oldRootClone = new PaneContentNode
+        {
+            MainChild = this.MainChild,
+            SubChild = this.SubChild,
+            Orientation = this.Orientation,
+            SplitRatio = this.SplitRatio,
+            TabViewModels = this.TabViewModels,
+            SelectedTabIndex = this.SelectedTabIndex
+        };
+
+        // 2. 下側に新しく展開する部屋を生成
+        var bottomNode = new PaneContentNode(newViewModel);
+
+        // 3. 自分自身（最上位ルート）をコンテナ枠へ変身させ、新旧を上下にガチッと直結！
+        this.TabViewModels = new List<object>();
+        this.Orientation = EnumOrientation.Horizontal;
+        this.MainChild = oldRootClone;
+        this.SubChild = bottomNode;
+
+        oldRootClone.Parent = this;
+        bottomNode.Parent = this;
+
+        // 全通知を撃ってWPFのGridを一瞬で書き換え
+        RaisePropertyChanged(string.Empty);
+    }
+    public void OuterSplitVertical(object newViewModel)
+    {
+        // 1. 自分自身の現在の全トポロジー子孫（4画面すべて）をそのまま引き継ぐクローンを生成
+        var oldRootClone = new PaneContentNode
+        {
+            MainChild = this.MainChild,
+            SubChild = this.SubChild,
+            Orientation = this.Orientation,
+            SplitRatio = this.SplitRatio,
+            TabViewModels = this.TabViewModels,
+            SelectedTabIndex = this.SelectedTabIndex
+        };
+
+        // 2. 下側に新しく展開する部屋を生成
+        var bottomNode = new PaneContentNode(newViewModel);
+
+        // 3. 自分自身（最上位ルート）をコンテナ枠へ変身させ、新旧を上下にガチッと直結！
+        this.TabViewModels = new List<object>();
+        this.Orientation = EnumOrientation.Vertical;
+        this.MainChild = oldRootClone;
+        this.SubChild = bottomNode;
+
+        oldRootClone.Parent = this;
+        bottomNode.Parent = this;
+
+        // 全通知を撃ってWPFのGridを一瞬で書き換え
+        RaisePropertyChanged(string.Empty);
+    }
+
+    public void ClearAllIndicators()
+    {
+        // 1. 自分自身が変更通知を撃ち、UI側（DockingPane）に対して「消灯しろ」とシグナルを送る
+        // 泥臭い文字列ではなく、専用の特殊な引数（propertyName）でUI側と結線します
+        RaisePropertyChanged("COMMAND_CLEAR_INDICATORS");
+
+        // 2. 再帰駆動：子ノードが存在するなら、ツリーの奥底まで1ノードも漏らさず命令を伝播させる
+        MainChild?.ClearAllIndicators();
+        SubChild?.ClearAllIndicators();
+    }
 }

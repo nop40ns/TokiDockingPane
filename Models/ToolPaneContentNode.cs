@@ -59,6 +59,10 @@ public partial class ToolPaneContentNode : ObservableObject, IPaneNode
         }
     }
 
+    public ToolPaneContentNode()
+    {
+    }
+
     public ToolPaneContentNode(object vm, string title)
     {
         _title = title;
@@ -102,7 +106,6 @@ public partial class ToolPaneContentNode : ObservableObject, IPaneNode
     }
 
 
-
     /// <summary>
     /// このペインをその場で縦割（左右）コンテナへとトランスフォームさせる（アロケーション最小化）
     /// </summary>
@@ -118,14 +121,11 @@ public partial class ToolPaneContentNode : ObservableObject, IPaneNode
         // 2. 新しくドロップされたViewModelを保持する「右側（Sub）」のノードを生成
         var rightNode = new PaneContentNode(newViewModel);
 
-
         leftNode.Parent = this;
         rightNode.Parent = this;
 
         // 3. 自身のペインデータをクリーンに切断（自身はコンテナ枠へ昇華するため）
-        //this.TabViewModels = null!;
         this.TabViewModels = new List<object>();
-
 
         // 4. トポロジーの書き換え ➔ WPF側が感知して一瞬で画面が割れる
         this.Orientation = EnumOrientation.Vertical;
@@ -155,12 +155,9 @@ public partial class ToolPaneContentNode : ObservableObject, IPaneNode
         topNode.Parent = this;
         bottomNode.Parent = this;
 
-        //this.TabViewModels = null!;
         this.TabViewModels = new List<object>();
 
-
-
-        // 3. トポロジーの書き換え ➔ 上下分割へ
+        // 3. トポロジー的の書き換え ➔ 上下分割へ
         this.Orientation = EnumOrientation.Horizontal;
         this.MainChild = topNode;
         this.SubChild = bottomNode;
@@ -170,8 +167,69 @@ public partial class ToolPaneContentNode : ObservableObject, IPaneNode
         OnPropertyChanged(nameof(Orientation));
     }
 
+    // =========================================================================
+    // 👑【2026自由分割規律：アウター横断大分割の執行実実装】
+    // ツールペインの領域（仕切り線の上）に落とされた瞬間に、画面全体を真っ二つに横断分割する
+    // =========================================================================
+    public void OuterSplitHorizontal(object newViewModel)
+    {
+        var oldRootClone = new ToolPaneContentNode
+        {
+            MainChild = this.MainChild,
+            SubChild = this.SubChild,
+            Orientation = this.Orientation,
+            SplitRatio = this.SplitRatio,
+            TabViewModels = new List<object>(this.TabViewModels),
+            SelectedTabIndex = this.SelectedTabIndex,
+            Title = this.Title,
+            State = this.State,
+            PaneSize = this.PaneSize
+        };
 
+        var topNewNode = new PaneContentNode(newViewModel);
 
+        this.TabViewModels = new List<object>();
+        this.Orientation = EnumOrientation.Horizontal;
+
+        // Main（上）に新しい赤枠、Sub（下）にツールペイン資産を丸ごとスライド！
+        this.MainChild = topNewNode;
+        this.SubChild = oldRootClone;
+
+        topNewNode.Parent = this;
+        oldRootClone.Parent = this;
+
+        OnPropertyChanged(string.Empty); // ツリー一斉再描画
+    }
+
+    public void OuterSplitVertical(object newViewModel)
+    {
+        var oldRootClone = new ToolPaneContentNode
+        {
+            MainChild = this.MainChild,
+            SubChild = this.SubChild,
+            Orientation = this.Orientation,
+            SplitRatio = this.SplitRatio,
+            TabViewModels = new List<object>(this.TabViewModels),
+            SelectedTabIndex = this.SelectedTabIndex,
+            Title = this.Title,
+            State = this.State,
+            PaneSize = this.PaneSize
+        };
+
+        var leftNewNode = new PaneContentNode(newViewModel);
+
+        this.TabViewModels = new List<object>();
+        this.Orientation = EnumOrientation.Vertical;
+
+        // Main（左）に新しい赤枠、Sub（右）にツールペイン資産をスライド！
+        this.MainChild = leftNewNode;
+        this.SubChild = oldRootClone;
+
+        leftNewNode.Parent = this;
+        oldRootClone.Parent = this;
+
+        OnPropertyChanged(string.Empty);
+    }
 
     [RelayCommand]
     private void TogglePin()
@@ -186,7 +244,6 @@ public partial class ToolPaneContentNode : ObservableObject, IPaneNode
         }
     }
 
-
     // 🔥【新章】ホバー時に外からポインタ駆動される開閉コマンド
     [RelayCommand] private void OpenPopup() => IsPopupOpened = true;
     [RelayCommand] private void ClosePopup() => IsPopupOpened = false;
@@ -196,4 +253,12 @@ public partial class ToolPaneContentNode : ObservableObject, IPaneNode
         // CommunityToolkit.Mvvm が裏で自動生成している本物の通知メソッドへそのままアドレスを横流しする
         this.OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
     }
-}
+
+    public void ClearAllIndicators()
+    {
+        // 4画面中央の高速ドラッグ時に残像バーを1ミリ秒で強制消灯させるためのシグナルパッシング
+        OnPropertyChanged(new PropertyChangedEventArgs("COMMAND_CLEAR_INDICATORS"));
+        MainChild?.ClearAllIndicators();
+        SubChild?.ClearAllIndicators();
+    }
+} // クラスの閉じ
