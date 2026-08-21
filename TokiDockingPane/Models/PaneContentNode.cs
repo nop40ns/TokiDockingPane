@@ -85,7 +85,11 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     {
     }
 
-
+    partial void OnSelectedTabIndexChanged(int value)
+    {
+        OnPropertyChanged(nameof(ActiveViewModel));
+        OnPropertyChanged(nameof(SelectedTab)); // 念のためSelectedTabも同期
+    }
 
     /// <summary>
     /// このペインに新しくタブを追加する（1本道非同期パイプラインへの直結用）
@@ -98,9 +102,10 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         TabViewModels = newList;
 
         // 2. 追加された新規タブへ自動的にフォーカス（選択）を移動させる
-      //  SelectedTabIndex = TabViewModels.Count - 1;
+        //  SelectedTabIndex = TabViewModels.Count - 1;
 
         // 3. アクティブな中身が変わったことをWPFの ContentPresenter へ向けて電撃通知！
+        OnPropertyChanged(nameof(SelectedTabIndex));
         OnPropertyChanged(nameof(ActiveViewModel));
     }
 

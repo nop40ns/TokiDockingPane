@@ -12,15 +12,13 @@
         
         Background="#FF1E1E1E">
     <Window.Resources>
-        <DataTemplate DataType="{x:Type vm:FileViewModel}">
-            <!-- テストプロジェクト内に作成した、テスト用のファイル表示コントロールを指定します -->
+        <!-- 🔷 4画面（ファイル一覧用）：x:Key="TokiFileViewTemplate" と命名 -->
+        <DataTemplate x:Key="TokiFileViewTemplate" DataType="{x:Type vm:FileViewModel}">
             <UserControls:FileView />
         </DataTemplate>
 
-        <!-- 🔷 B. 右ツールウィンドウ用：LuncherViewModelWPF が来たら、ランチャーを降臨！ -->
-        <!-- これにより、ポップアップさせた際や右側の固定スロット内に、本物のランチャー画面が144Hzでカチッと出現します -->
-        <DataTemplate DataType="{x:Type vm:LuncherViewModelWPF}">
-            <!-- 外部プロパティを一切挟まず、ダイレクトにテスト用のランチャーコントロールを全域割り当て！ -->
+        <!-- 🔷 右ツール（ランチャー用）：x:Key="TokiLuncherTemplate" と命名 -->
+        <DataTemplate x:Key="TokiLuncherTemplate" DataType="{x:Type vm:LuncherViewModelWPF}">
             <UserControls:LuncherControl />
         </DataTemplate>
 
