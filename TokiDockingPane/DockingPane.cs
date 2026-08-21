@@ -56,7 +56,11 @@ public class DockingPane : ContentControl
     {
         this.DataContextChanged += OnDataContextChanged;
         this.PreviewMouseWheel += OnPreviewMouseWheel;
-        　
+
+        this.PreviewMouseLeftButtonDown += OnToolHeaderLeftButtonDown;
+        this.PreviewMouseMove += OnToolHeaderMouseMove;
+
+
         this.PreviewMouseLeftButtonDown += OnPreviewMouseLeftButtonDown;
         this.PreviewMouseMove += OnPreviewMouseMove;　
 
@@ -72,13 +76,7 @@ public class DockingPane : ContentControl
     {
         base.OnApplyTemplate();
 
-        // このDockingPane自身が最外殻コントロール（あるいはその内部）の時、ツールヘッダーのドラッグメッセージを傍受します
-        _toolHeader = GetTemplateChild("PART_ToolHeader") as Grid;
-        if (_toolHeader != null)
-        {
-            _toolHeader.PreviewMouseLeftButtonDown += OnToolHeaderLeftButtonDown;
-            _toolHeader.PreviewMouseMove += OnToolHeaderMouseMove;
-        }
+ 
 
 
 
@@ -110,10 +108,22 @@ public class DockingPane : ContentControl
 
     private void OnToolHeaderLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+
+        var hitElement = e.OriginalSource as DependencyObject;
+        if (hitElement == null) return;
+
+        ScrollViewer? activeScrollViewer = null;
+        if (_headerScrollViewer != null && _headerScrollViewer.IsMouseOver) activeScrollViewer = _headerScrollViewer;
+        else activeScrollViewer = FindParent<ScrollViewer>(hitElement);
+
+        if (activeScrollViewer == null || activeScrollViewer.Name != "PART_HeaderScrollViewer") return;
+
         if (sender is Grid header && header.Tag is IPaneNode toolNode)
         {
             _toolDragStartPoint = e.GetPosition(this);
             _isToolDragging = true;
+
+            e.Handled = true;
         }
     }
 
@@ -882,6 +892,7 @@ public class DockingPane : ContentControl
 
     private void SyncTabVisibility()
     {
+        return;
         if (_tabContentContainer == null || !(this.DataContext is PaneContentNode node) || node.TabViewModels == null) return;
 
         int selectedIndex = node.SelectedTabIndex;
@@ -900,8 +911,13 @@ public class DockingPane : ContentControl
                 var presenter = _tabContentContainer.Children[i] as ContentPresenter;
                 if (presenter != null)
                 {
-                    presenter.Content = null;
-                    presenter.Content = node.TabViewModels[i];
+                    var targetViewModel = node.TabViewModels[i].ViewModel;
+
+                    // ✨ 現在の中身と異なる場合のみ代入する（無駄なnullクリアを除去）
+                    if (presenter.Content != targetViewModel)
+                    {
+                        presenter.Content = targetViewModel;
+                    }
                 }
 
                 if (i == selectedIndex)

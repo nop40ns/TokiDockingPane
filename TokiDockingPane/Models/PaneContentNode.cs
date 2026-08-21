@@ -36,6 +36,12 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     [ObservableProperty]
     private int _selectedTabIndex = 0;
 
+    partial void OnSelectedTabIndexChanged(int oldValue, int newValue)
+    {
+        OnPropertyChanged(nameof(ActiveViewModel));
+    }
+
+
     // 各タブの実体データ（ViewModelポインタ）を保持するリスト
     // ※ 1バイト管理思想に基づき、初期化時に一定数をプールするアプローチも可能
     [ObservableProperty]
