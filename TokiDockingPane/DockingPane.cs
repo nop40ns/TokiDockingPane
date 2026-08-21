@@ -24,6 +24,8 @@ public class TokiDragDropPayload
     }
 }
 
+[TemplatePart(Name = "PART_TabItemBorder", Type = typeof(Border))]
+
 public class DockingPane : ContentControl
 {
     private Grid? _tabContentContainer;
@@ -43,7 +45,8 @@ public class DockingPane : ContentControl
     private Border? _horizontalSplitterIndicator;
 
     private Grid? _toolHeader;
-     
+
+    private Border? _tabItemBorder;
 
 
     static DockingPane()
@@ -77,14 +80,11 @@ public class DockingPane : ContentControl
         base.OnApplyTemplate();
 
 
-        //_toolHeader = GetTemplateChild("PART_ToolHeader") as Grid;
-        //if (_toolHeader != null)
-        //{
-        //    _toolHeader.PreviewMouseLeftButtonDown += OnToolHeaderLeftButtonDown;
-        //    _toolHeader.PreviewMouseMove += OnToolHeaderMouseMove;
-        //}
-
-
+        if (_tabItemBorder != null)
+        {
+            _tabItemBorder.PreviewMouseLeftButtonDown -= OnTabHeaderMouseLeftButtonDown;
+            _tabItemBorder.PreviewMouseMove -= OnTabHeaderMouseMove;
+        }
 
         _tabContentContainer = GetTemplateChild("PART_TabContentContainer") as Grid;
         _headerScrollViewer = GetTemplateChild("PART_HeaderScrollViewer") as ScrollViewer;
@@ -111,6 +111,21 @@ public class DockingPane : ContentControl
     private Point _toolDragStartPoint;
     private bool _isToolDragging = false;
 
+    public void OnTabHeaderMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        // ×ボタンがクリックされた時はドラッグを開始しないようにガード
+        if (e.OriginalSource is DependencyObject source &&
+            VisualTreeHelper.GetParent(source) is Button) return;
+
+        System.Diagnostics.Debug.WriteLine($"タブが掴まれました！ターゲットのデータ: {this.DataContext}");
+
+        // ここからマウスキャプチャ（CaptureMouse）などの引き抜き・ドラッグロジックを始動させます
+    }
+
+    public void OnTabHeaderMouseMove(object sender, MouseEventArgs e)
+    {
+        // ドラッグ中のインジケータ移動や青いプレビューバーの表示処理
+    }
     private void OnToolHeaderLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
 

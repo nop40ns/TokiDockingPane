@@ -73,7 +73,7 @@ xmlns:conv="clr-namespace:TokiDockingPane.Converters"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             Visibility="Collapsed">
                             <DockPanel>
-                                <ItemsControl
+                                <ItemsControl x:Name="PART_TabHeader"
                                     Background="#FF2D2D30"
                                     DockPanel.Dock="Top"
                                     ItemsSource="{Binding TabViewModels}">
@@ -107,6 +107,7 @@ xmlns:conv="clr-namespace:TokiDockingPane.Converters"
                                                 BorderThickness="1,1,1,0"
                                                 CornerRadius="3,3,0,0"
                                                 Cursor="Hand">
+                                           
                                                 <Grid VerticalAlignment="Center">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*" />
@@ -150,6 +151,7 @@ xmlns:conv="clr-namespace:TokiDockingPane.Converters"
                                                                         <Setter TargetName="ButtonBorder" Property="Background" Value="#FFC42B1C" />
                                                                         <Setter TargetName="CrossPath" Property="Stroke" Value="#FFFFFFFF" />
                                                                     </Trigger>
+                                                                    
                                                                 </ControlTemplate.Triggers>
                                                             </ControlTemplate>
                                                         </Button.Template>
@@ -361,8 +363,22 @@ xmlns:conv="clr-namespace:TokiDockingPane.Converters"
                             </VisualStateGroup>
                         </VisualStateManager.VisualStateGroups>
                     </Grid>
+
+                    <ControlTemplate.Triggers>
+                        <DataTrigger Binding="{Binding DataContext.IsToolPane, RelativeSource={RelativeSource Self}}" Value="True">
+                            <!-- PART_TabHeaderを操作して下側に配置 -->
+                            <Setter TargetName="PART_TabHeader" Property="DockPanel.Dock" Value="Bottom" />
+                            <!-- 背景と枠線をツール風に変更 -->
+                            <Setter Property="Background" Value="#FF2D2D30" />
+                            <Setter Property="BorderBrush" Value="#FF3F3F46" />
+                        </DataTrigger>
+                    </ControlTemplate.Triggers>
+
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        
+        
+        
     </Style>
 </ResourceDictionary>
