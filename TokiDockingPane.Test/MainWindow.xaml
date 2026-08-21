@@ -13,12 +13,12 @@
         Background="#FF1E1E1E">
     <Window.Resources>
         <!-- 🔷 4画面（ファイル一覧用）：x:Key="TokiFileViewTemplate" と命名 -->
-        <DataTemplate x:Key="TokiFileViewTemplate" DataType="{x:Type vm:FileViewModel}">
+        <DataTemplate   DataType="{x:Type vm:FileViewModel}">
             <UserControls:FileView />
         </DataTemplate>
 
         <!-- 🔷 右ツール（ランチャー用）：x:Key="TokiLuncherTemplate" と命名 -->
-        <DataTemplate x:Key="TokiLuncherTemplate" DataType="{x:Type vm:LuncherViewModelWPF}">
+        <DataTemplate   DataType="{x:Type vm:LuncherViewModelWPF}">
             <UserControls:LuncherControl />
         </DataTemplate>
 

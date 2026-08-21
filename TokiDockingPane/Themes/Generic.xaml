@@ -358,7 +358,7 @@ xmlns:conv="clr-namespace:TokiDockingPane.Converters"
                                     x:Name="PART_TabContentContainer"
                                     Background="#FF1E1E1E"
                                     TextBlock.Foreground="#FFDFDFDF">
-                                    <ContentPresenter Content="{Binding ActiveViewModel}" />
+                                    <ContentPresenter Content="{Binding DataContext.ActiveViewModel, RelativeSource={RelativeSource TemplatedParent}}" />
                                     <Grid
                                         x:Name="PART_DockingIndicator"
                                         Width="120"

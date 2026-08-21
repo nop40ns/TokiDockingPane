@@ -76,6 +76,9 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     {
         TabViewModels = new List<TabViewModel> { tab };
         SelectedTabIndex = 0;
+
+        OnPropertyChanged(nameof(SelectedTabIndex));
+        OnPropertyChanged(nameof(ActiveViewModel));
     }
 
     /// <summary>
