@@ -17,21 +17,7 @@ xmlns:conv="clr-namespace:TokiDockingPane.Converters"
                 <ControlTemplate TargetType="{x:Type viewModels:DockingPaneViewModel}">
                     <!--  5列の極限VSインフラGrid。中央のメイン領域(Column 2)の比率を汚さずにツールを統治します  -->
                     <Grid Background="#FF1E1E1E">
-                        <Grid.ColumnDefinitions>
-                            <!--  列0: 左サイドバーバー（将来用）  -->
-                            <ColumnDefinition Width="Auto" />
-                            <!--  列1: 左ツールペイン（将来用）  -->
-                            <ColumnDefinition Width="Auto" />
-                            <!--  列2: 中央メイン（4画面自由分割ツリーが * 寸法で大暴れする100%可変領域）  -->
-                            <ColumnDefinition Width="*" />
-                            <!--  列3: 🌟右ツール幅。モデルの PaneSize (280) と Mode=TwoWay でダイレクト双方向直結！  -->
-                            <ColumnDefinition
-                                x:Name="PART_RightToolColumn"
-                                Width="{Binding RightToolPane.PaneSize, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, Converter={StaticResource DoubleToGridLengthConverter}}"
-                                MinWidth="100" />
-                            <!--  列4: 右サイドバーバー（ピン留め解除されたソリューションエクスプローラーの避難所）  -->
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+                        
 
                         <!--  📦 列2：中央メイン領域（4画面自由分割ツリー）  -->
                         <ContentPresenter
@@ -39,193 +25,13 @@ xmlns:conv="clr-namespace:TokiDockingPane.Converters"
                             Grid.Column="2"
                             Content="{Binding RootDocumentNode, RelativeSource={RelativeSource TemplatedParent}}" />
 
-
-                        <!--  📊 列2と列3の境界線：右ツールウィンドウリサイズ用の本物の GridSplitter  -->
-                        <!--  列3の左端に配置。ShowsPreview="False" により、ドラッグ中にリアルタイムに右ツール幅が変化します  -->
-                        <GridSplitter
-                            x:Name="PART_RightToolSplitter"
-                            Grid.Column="3"
-                            Width="4"
-                            HorizontalAlignment="Left"
-                            VerticalAlignment="Stretch"
-                            Background="#FF3E3E42"
-                            ShowsPreview="False" />
-
-                        <!--  🏢 列3：右ツールペイン（ソリューションエクスプローラーの実体固定スロット）  -->
-                        <Border
-                            x:Name="PART_RightToolDockSlot"
-                            Grid.Column="3"
-                            Margin="4,0,0,0"
-                            Background="#FF2D2D30"
-                            BorderBrush="#FF3E3E42"
-                            BorderThickness="1,0,0,0">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="32" />
-                                    <!--  ツールヘッダー（引き抜きドラッグ対象）  -->
-                                    <RowDefinition Height="*" />
-                                    <!--  ツールコンテンツ領域  -->
-                                </Grid.RowDefinitions>
-
-                                <!--  🛠️ ツールヘッダーバー（引き抜き移動対応版）  -->
-                                <!--  Tagプロパティを経由して、このツールペインのDataContextをC#へパッシングし、共通D&Dをキック！  -->
-                                <!--  ★【修正】：Padding="6,0" を完全に削除！  -->
-                                <Grid
-                                    x:Name="PART_ToolHeader"
-                                    Grid.Row="0"
-                                    Background="#FF3E3E42"
-                                    IsHitTestVisible="True"
-                                    Tag="{Binding RightToolPane, RelativeSource={RelativeSource TemplatedParent}}">
-
-                                    <TextBlock
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        FontWeight="Bold"
-                                        Foreground="#FFDFDFDF"
-                                        IsHitTestVisible="False"
-                                        Text="{Binding RightToolPane.Title, RelativeSource={RelativeSource TemplatedParent}}" />
-
-                                    <!--  📌 ピン留め（TogglePin）ボタン  -->
-                                    <Button
-                                        Width="20"
-                                        Height="20"
-                                        HorizontalAlignment="Right"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderThickness="0"
-                                        Command="{Binding Path=DataContext.RightToolPane.TogglePinCommand, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}"
-                                        Cursor="Hand">
-                                        <Grid>
-                                            <!--  通常のButtonなので、このアイコンの向きのコントロールは下部のDataTriggerが100%安全に行います  -->
-                                            <Path
-                                                x:Name="PART_PinIcon"
-                                                Data="M10,2 L10,6 M6,6 L14,6 M8,6 L8,14 M5,14 L15,14 M10,14 L10,18"
-                                                RenderTransformOrigin="0.5,0.5"
-                                                Stroke="#FF999999"
-                                                StrokeThickness="1.5" />
-                                        </Grid>
-                                    </Button>
-                                </Grid>
-
-                                <!--  📁 ツール内部コンテンツ（ツリーやDataGrid用）  -->
-                                <ContentPresenter Grid.Row="1" Content="{Binding RightToolPane, RelativeSource={RelativeSource TemplatedParent}}" />
-
-                            </Grid>
-                        </Border>
-
-                        <!--  ◀ 列4：右サイドバー（ピン留めが外された時に、ここに縦書きで格納される）  -->
-                        <Border
-                            x:Name="PART_RightSideBar"
-                            Grid.Column="4"
-                            Width="24"
-                            Background="#FF2D2D30"
-                            Visibility="Collapsed">
-                            <!--  クリックまたはホバーされた瞬間に OpenPopupCommand を叩いてポップアップを顕現  -->
-                            <Button
-                                Background="Transparent"
-                                BorderThickness="0"
-                                Command="{Binding RightToolPane.OpenPopupCommand, RelativeSource={RelativeSource TemplatedParent}}"
-                                Content="{Binding RightToolPane.Title, RelativeSource={RelativeSource TemplatedParent}}"
-                                Cursor="Hand"
-                                Foreground="#FFDFDFDF">
-                                <Button.LayoutTransform>
-                                    <RotateTransform Angle="90" />
-                                    <!--  縦書きボタンにトランスフォーム！  -->
-                                </Button.LayoutTransform>
-                            </Button>
-                        </Border>
-
-                        <!--  👻 【VS形態：ホバーポップアップレイヤ】  -->
-                        <!--  State==AutoHidden かつ IsPopupOpened==True の時だけ、メイン画面の右上(Column 2)にふわっと最前面オーバーレイ出現  -->
-                        <!--  👻 【VS形態：ホバーポップアップレイヤ最終解決版】  -->
-                        <!--  Background="Transparent" によって、目に見えない衝突判定のバリアを広げ、マウスの離脱を100%検知します  -->
-                        <!--  👻 【VS形態：ホバーポップアップレイヤ最終確定形態】  -->
-                        <!--  Background="Transparent" によって、目に見えない透明な衝突のバリアを広げます  -->
-                        <!--  🌟【解決】：WPFのUI要素自体の直下に、マウスが外れた（MouseLeave）瞬間に  -->
-                        <!--  開発者様がC#側に用意してくださった本物の『ClosePopupCommand』を  -->
-                        <!--  最外殻（AncestorType）から一本釣りでダイレクトに叩かせるためのインフラを仕込みます！  -->
-                        <!--  👻 【VS形態：ホバーポップアップレイヤ最終確定形態】  -->
-                        <!--  Background="Transparent" によって、目に見えない透明な衝突判定の翼を全域に広げます  -->
-                        <!--  🌟【核心修正】：WPF標準の超軽量 EventTrigger をダイレクトインサート！  -->
-                        <!--  複雑なアニメーション(Storyboard)でC#変数を跨ごうとすると例外が出るため、  -->
-                        <!--  マウスが離脱したその0.001ミリ秒の瞬間に、Popup自身のVisibilityプロパティを直接「Collapsed」に叩き落とし、  -->
-                        <!--  同時に、最外殻のプロパティ（RightToolPane.IsPopupOpened）に対しても、WPF純正のプロパティ直接代入（SetStoryboard）で【False】を上書き送還します！  -->
-                        <!--  👻 【VS形態：ホバーポップアップレイヤ最終確定形態】  -->
-                        <!--  Background="Transparent" によって、目に見えない透明な衝突のバリアを広げます  -->
-                        <!--  👻 【VS形態：ホバーポップアップレイヤ・正真正銘の最終完全形態】  -->
-                        <!--  開発者様の絶対正義の「純粋なGrid」の姿のまま完全開通させます！  -->
-                        <!--  Background="Transparent" によって、目に見えない衝突判定のバリアを広げます  -->
-                        <Grid
-                            x:Name="PART_RightToolPopup"
-                            Grid.Column="2"
-                            Grid.ColumnSpan="2"
-                            Width="{Binding RightToolPane.PaneSize, RelativeSource={RelativeSource TemplatedParent}}"
-                            HorizontalAlignment="Right"
-                            Panel.ZIndex="99"
-                            Background="Transparent"
-                            Visibility="Collapsed">
-
-                            <!--  📁 ツール内部コンテンツ（文字色白化ホールド）  -->
-                            <Border
-                                Margin="0,1,0,1"
-                                Background="#FF2D2D30"
-                                BorderBrush="#FF007ACC"
-                                BorderThickness="1,1,1,1"
-                                TextBlock.FontSize="12"
-                                TextBlock.Foreground="#FFDFDFDF">
-                                <Grid>
-                                    <ContentPresenter Content="{Binding RightToolPane.ActiveViewModel, RelativeSource={RelativeSource TemplatedParent}}" />
-                                </Grid>
-                            </Border>
-
-
-                        </Grid>
+ 
+ 
 
 
 
                     </Grid>
-
-                    <!--  =========================================================================  -->
-                    <!--  🎯【トリガーセクション最終形】：開閉のコンフリクトを完全消滅させた黄金比  -->
-                    <!--  =========================================================================  -->
-                    <!--  =========================================================================  -->
-                    <!--  🎯【トリガーセクション最終形】：すべてのコンフリクト・例外を完全粉砕  -->
-                    <!--  =========================================================================  -->
-                    <!--  =========================================================================  -->
-                    <!--  🎯【トリガーセクション最終形】：開閉のコンフリクトを完全消滅させた黄金比  -->
-                    <!--  =========================================================================  -->
-                    <ControlTemplate.Triggers>
-
-                        <!--  🟩 状態①：普段ピンで固定されている通常時（Docked）  -->
-                        <DataTrigger Binding="{Binding RightToolPane.State, RelativeSource={RelativeSource Self}}" Value="Docked">
-                            <Setter TargetName="PART_RightToolColumn" Property="MinWidth" Value="100" />
-                        </DataTrigger>
-
-                        <!--  🔷 状態②：ピン留めボタンが押され、自動格納状態（AutoHidden）になった瞬間！  -->
-                        <DataTrigger Binding="{Binding RightToolPane.State, RelativeSource={RelativeSource Self}}" Value="AutoHidden">
-                            <Setter TargetName="PART_RightToolColumn" Property="Width" Value="Auto" />
-                            <Setter TargetName="PART_RightToolColumn" Property="MinWidth" Value="0" />
-                            <Setter TargetName="PART_RightToolSplitter" Property="Visibility" Value="Collapsed" />
-                            <Setter TargetName="PART_RightToolDockSlot" Property="Visibility" Value="Collapsed" />
-                            <Setter TargetName="PART_RightSideBar" Property="Visibility" Value="Visible" />
-                            <Setter TargetName="PART_MainContent" Property="Grid.ColumnSpan" Value="2" />
-                            <Setter TargetName="PART_PinIcon" Property="RenderTransform">
-                                <Setter.Value>
-                                    <RotateTransform Angle="90" />
-                                </Setter.Value>
-                            </Setter>
-                        </DataTrigger>
-
-                        <!--  🔷 状態③：AutoHidden 状態で、かつデータ（IsPopupOpened）が True の時だけポップアップをVisible化！  -->
-                        <!--  競合する IsMouseOver 条件を完全に撤去したため、クリックした瞬間に0msで即死するフリーズは100%消滅します  -->
-                        <MultiDataTrigger>
-                            <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding RightToolPane.State, RelativeSource={RelativeSource Self}}" Value="AutoHidden" />
-                                <Condition Binding="{Binding RightToolPane.IsPopupOpened, RelativeSource={RelativeSource Self}}" Value="True" />
-                            </MultiDataTrigger.Conditions>
-                            <Setter TargetName="PART_RightToolPopup" Property="Visibility" Value="Visible" />
-                        </MultiDataTrigger>
-                    </ControlTemplate.Triggers>
+ 
 
 
                 </ControlTemplate>

@@ -76,8 +76,13 @@ public class DockingPane : ContentControl
     {
         base.OnApplyTemplate();
 
- 
 
+        //_toolHeader = GetTemplateChild("PART_ToolHeader") as Grid;
+        //if (_toolHeader != null)
+        //{
+        //    _toolHeader.PreviewMouseLeftButtonDown += OnToolHeaderLeftButtonDown;
+        //    _toolHeader.PreviewMouseMove += OnToolHeaderMouseMove;
+        //}
 
 
 
@@ -254,7 +259,7 @@ public class DockingPane : ContentControl
                 Point mouseScreenPos = PointToScreen(Mouse.GetPosition(this));
 
                 int dragIndex = 
-                    sourceNode.TabViewModels.FindIndex(x => x.ViewModel == draggedData);
+                    sourceNode.TabViewModels.FindIndex(x => x == draggedData);
 
                 if (dragIndex >= 0)
                 {

@@ -36,6 +36,20 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     [ObservableProperty]
     private int _selectedTabIndex = 0;
 
+    [ObservableProperty]
+    private bool _isToolPane = false;
+
+    [ObservableProperty]
+    private bool _canAutoHide = false;
+
+    // ✨ 現在ピン留めが外れて、実際に「隠れている（ボタン化している）」状態かどうか
+    [ObservableProperty]
+    private bool _isAutoHidden = false;
+
+
+
+
+
     partial void OnSelectedTabIndexChanged(int oldValue, int newValue)
     {
         OnPropertyChanged(nameof(ActiveViewModel));
@@ -78,8 +92,11 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     /// </summary>
 
 
-    public PaneContentNode(TabViewModel tab)
+    public PaneContentNode(TabViewModel tab , bool isToolPane=false)
     {
+        IsToolPane = isToolPane;
+
+
         TabViewModels = new List<TabViewModel> { tab };
         SelectedTabIndex = 0;
 
@@ -90,8 +107,10 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     /// <summary>
     /// レイアウトコンテナ（親ノード）用コンストラクタ
     /// </summary>
-    public PaneContentNode()
+    public PaneContentNode( bool isToolPane = false )
     {
+        IsToolPane = isToolPane;
+
     }
 
     partial void OnSelectedTabIndexChanged(int value)

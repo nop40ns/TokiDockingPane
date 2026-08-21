@@ -19,20 +19,13 @@ public class DockingPaneViewModel : Control
     public static readonly DependencyProperty RootDocumentNodeProperty =
         DependencyProperty.Register(nameof(RootDocumentNode), typeof(IPaneNode), typeof(DockingPaneViewModel), new PropertyMetadata(null));
 
-    public static readonly DependencyProperty RightToolPaneProperty =
-        DependencyProperty.Register(nameof(RightToolPane), typeof(ToolPaneContentNode), typeof(DockingPaneViewModel), new PropertyMetadata(null));
-
+    
     public IPaneNode RootDocumentNode
     {
         get => (IPaneNode)GetValue(RootDocumentNodeProperty);
         set => SetValue(RootDocumentNodeProperty, value);
     }
-
-    public ToolPaneContentNode RightToolPane
-    {
-        get => (ToolPaneContentNode)GetValue(RightToolPaneProperty);
-        set => SetValue(RightToolPaneProperty, value);
-    }
+     
 
     // XAML側の最外殻パーツを一本釣りするためのプライベートポインタ
     private Grid? _outerDockingIndicator;
@@ -45,11 +38,10 @@ public class DockingPaneViewModel : Control
             new FrameworkPropertyMetadata(typeof(DockingPaneViewModel)));
     }
 
-    public DockingPaneViewModel(IPaneNode rootDocument, ToolPaneContentNode rightTool)
+    public DockingPaneViewModel(IPaneNode rootDocument)
     {
         RootDocumentNode = rootDocument;
-        RightToolPane = rightTool;
-    }
+     }
 
     public DockingPaneViewModel()
     {
@@ -66,7 +58,7 @@ public class DockingPaneViewModel : Control
 
     private void OnPreviewMouseDown(object sender, MouseEventArgs  e)
     {
-        if (this.RightToolPane == null || this.RightToolPane.IsPopupOpened == false) return;
+     //   if (this.RightToolPane == null || this.RightToolPane.IsPopupOpened == false) return;
 
         // 🌟【大核心】：クリックされた最末尾の具象要素（TextBlock等）を正確に一本釣り！
         if (e.OriginalSource is System.Windows.DependencyObject clickedElement)
@@ -89,12 +81,12 @@ public class DockingPaneViewModel : Control
             }
 
             // 🎯【外側確定クリック】：もしクリックされた座標が、ポップアップの領土の外（4画面やタブ）だった場合！
-            if (!isClickInsidePopup)
-            {
-                // 0msでデータモデル側の IsPopupOpened を False へ直接叩き落とす！
-                // これにより最外殻の通常トリガーが連動し、Popupが「シュッ」と安全格納されます！
-                this.RightToolPane.IsPopupOpened = false;
-            }
+            //if (!isClickInsidePopup)
+            //{
+            //    // 0msでデータモデル側の IsPopupOpened を False へ直接叩き落とす！
+            //    // これにより最外殻の通常トリガーが連動し、Popupが「シュッ」と安全格納されます！
+            //    this.RightToolPane.IsPopupOpened = false;
+            //}
         }
     }
    
