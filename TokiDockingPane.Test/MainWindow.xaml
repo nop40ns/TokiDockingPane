@@ -1,0 +1,38 @@
+﻿<Window x:Class="TokiDockingPane.Test.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+         xmlns:viewModels="clr-namespace:TokiDockingPane.ViewModels;assembly=TokiDockingPane" 
+        xmlns:UserControls="clr-namespace:TokiDockingPane.Test.UserControls"
+                xmlns:vm="clr-namespace:TokiDockingPane.Test.ViewModels"
+
+        
+        Title="MainWindow" Height="600" Width="1000"
+        
+        Background="#FF1E1E1E">
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type vm:FileViewModel}">
+            <!-- テストプロジェクト内に作成した、テスト用のファイル表示コントロールを指定します -->
+            <UserControls:FileView />
+        </DataTemplate>
+
+        <!-- 🔷 B. 右ツールウィンドウ用：LuncherViewModelWPF が来たら、ランチャーを降臨！ -->
+        <!-- これにより、ポップアップさせた際や右側の固定スロット内に、本物のランチャー画面が144Hzでカチッと出現します -->
+        <DataTemplate DataType="{x:Type vm:LuncherViewModelWPF}">
+            <!-- 外部プロパティを一切挟まず、ダイレクトにテスト用のランチャーコントロールを全域割り当て！ -->
+            <UserControls:LuncherControl />
+        </DataTemplate>
+
+
+    </Window.Resources>
+    <!-- 🌟【完全大復活の一撃】 -->
+    <!-- MainWindow自身は、C#側で DataContext にセットされた本物の DockingPaneViewModel インスタンスを -->
+    <!-- ライブラリ側（assembly=TokiDockingPane）のカスタムコントロールタグとして直接ここにカチッと直結します。 -->
+    <!-- これにより、WPFは Generic.xaml 内部の「5列のVS風設計図（Style）」を一瞬で100%確定解決し、即時ロードします！ -->
+    <Grid>
+        <viewModels:DockingPaneViewModel 
+            RootDocumentNode="{Binding RootDocumentNode}" 
+            RightToolPane="{Binding RightToolPane}" />
+    </Grid>
+</Window>
