@@ -76,7 +76,8 @@
                                 </Grid>
 
                                 <!-- 📁 ツール内部コンテンツ（ツリーやDataGrid用） -->
-                                <ContentPresenter Grid.Row="1" Content="{Binding RightToolPane.ActiveViewModel, RelativeSource={RelativeSource TemplatedParent}}"  />
+                                <ContentPresenter Grid.Row="1" Content="{Binding RightToolPane, RelativeSource={RelativeSource TemplatedParent}}" />
+
                             </Grid>
                         </Border>
 
@@ -122,7 +123,7 @@
                             <Border Background="#FF2D2D30" BorderBrush="#FF007ACC" BorderThickness="1,1,1,1" Margin="0,1,0,1"
                                     TextBlock.FontSize="12" TextBlock.Foreground="#FFDFDFDF">
                                 <Grid>
-                                    <ContentPresenter Content="{Binding RightToolPane.ActiveViewModel, RelativeSource={RelativeSource TemplatedParent}}" />
+                                    <ContentPresenter Content="{Binding RightToolPane.ActiveViewModel, RelativeSource={RelativeSource TemplatedParent}}"  />
                                 </Grid>
                             </Border>
 
@@ -193,6 +194,7 @@
 
     <DataTemplate DataType="{x:Type models:ToolPaneContentNode}">
         <local:DockingPane />
+
     </DataTemplate>
 
     <!-- ========================================================================= -->
@@ -232,7 +234,7 @@
                                                         <ColumnDefinition Width="*" />
                                                         <ColumnDefinition Width="20" />
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Grid.Column="0" FontSize="24" Foreground="#FFDFDFDF" Text="{Binding}" VerticalAlignment="Center" HorizontalAlignment="Left" ToolTip="{Binding}"/>
+                                                    <TextBlock Grid.Column="0" FontSize="24" Foreground="#FFDFDFDF" Text="{Binding Title}" VerticalAlignment="Center" HorizontalAlignment="Left" ToolTip="{Binding Title}"/>
                                                     <Button x:Name="PART_TabCloseButton" Grid.Column="1" Width="14" Height="14" HorizontalAlignment="Right" VerticalAlignment="Center" Background="Transparent" BorderThickness="0" Cursor="Arrow" Focusable="False">
                                                         <Button.Template>
                                                             <ControlTemplate TargetType="Button">
@@ -254,9 +256,12 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <Grid x:Name="PART_TabContentContainer" Background="#FF1E1E1E">
+                                <Grid x:Name="PART_TabContentContainer" Background="#FF1E1E1E" TextBlock.Foreground="#FFDFDFDF">
                                     <ContentPresenter Content="{Binding ActiveViewModel}" />
-                                    <Grid x:Name="PART_DockingIndicator" Width="120" Height="120" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
+                                    <Grid x:Name="PART_DockingIndicator" Width="120" Height="120" HorizontalAlignment="Center" VerticalAlignment="Center" 
+                                          
+                                          
+                                          Visibility="Collapsed">
                                         <Ellipse Fill="#80000000" Stroke="#FF3E3E42" StrokeThickness="1" />
                                         <Grid>
                                             <Border x:Name="PART_IndicatorCenter" Width="24" Height="24" Background="#FF2D2D30" BorderBrush="#FF007ACC" BorderThickness="1" CornerRadius="2">
@@ -279,6 +284,8 @@
                                 </Grid>
                             </DockPanel>
                         </Border>
+                        
+                        
                         <Grid x:Name="PART_VerticalSplitGrid" Visibility="Collapsed">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -309,6 +316,9 @@
                                 </Border.Effect>
                             </Border>
                         </Grid>
+                        
+                        
+                        
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="LayoutStates">
                                 <VisualState x:Name="LeafState">

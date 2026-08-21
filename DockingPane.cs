@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
+using System.IO.Packaging;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -14,9 +15,9 @@ namespace TokiDockingPane;
 public class TokiDragDropPayload
 {
     public IPaneNode SourceNode { get; }
-    public object DraggedData { get; }
+    public TabViewModel DraggedData { get; }
 
-    public TokiDragDropPayload(IPaneNode sourceNode, object draggedData)
+    public TokiDragDropPayload(IPaneNode sourceNode, TabViewModel draggedData)
     {
         SourceNode = sourceNode;
         DraggedData = draggedData;
@@ -33,7 +34,7 @@ public class DockingPane : ContentControl
     private Point _dragStartPoint;
     private bool _isDragging;
 
-    private Grid? _dockingIndicator;
+    private Grid? _dockingIndicator{ get; set; }
 
     private static bool _isGloballyDragging;
 
@@ -130,7 +131,7 @@ public class DockingPane : ContentControl
         {
             _isToolDragging = false;
 
-            object? draggedData = toolNode.ActiveViewModel;
+            TabViewModel? draggedData = toolNode.SelectedTab;
             if (draggedData == null) return;
 
             // 4画面中央の仕切り線バー（Indicator）たちを一斉に Visible 臨戦態勢へ！
@@ -189,7 +190,8 @@ public class DockingPane : ContentControl
         ContentPresenter? clickedPresenter = FindParent<ContentPresenter>(hitElement);
         if (clickedPresenter != null && node.TabViewModels != null)
         {
-            int clickedIndex = node.TabViewModels.IndexOf(clickedPresenter.Content);
+            int clickedIndex = node.TabViewModels
+                        .FindIndex(x =>x == clickedPresenter.Content);
             if (clickedIndex >= 0)
             {
                 node.SelectedTabIndex = clickedIndex;
@@ -209,7 +211,7 @@ public class DockingPane : ContentControl
         {
             _isDragging = false;
 
-            object? draggedData = sourceNode.ActiveViewModel;
+            TabViewModel ? draggedData = sourceNode.SelectedTab ;
             if (draggedData == null) return;
 
             // ➔ 【新章：仕切り線バーの一斉点火】
@@ -225,7 +227,7 @@ public class DockingPane : ContentControl
             if (_dockingIndicator != null)
             {
                 _dockingIndicator.Visibility = Visibility.Visible;
-                Debug.WriteLine("ここで表示");
+                Debug.WriteLine($"➔ [DEBUG] (部屋Hash: {this.GetHashCode()}) _dockingIndicator.Visibility = Visibility.Visibility.Visible");
             }
 
             var payload = new TokiDragDropPayload(sourceNode, draggedData);
@@ -241,7 +243,9 @@ public class DockingPane : ContentControl
                 // マウスの現在位置（スクリーン絶対座標）を0msキャプチャ
                 Point mouseScreenPos = PointToScreen(Mouse.GetPosition(this));
 
-                int dragIndex = sourceNode.TabViewModels.IndexOf(draggedData);
+                int dragIndex = 
+                    sourceNode.TabViewModels.FindIndex(x => x.ViewModel == draggedData);
+
                 if (dragIndex >= 0)
                 {
                     // 1. 【先攻引き抜き】完璧に直った親結線付きのRemoveTabで元ペインを0ms消滅・緊縮させる
@@ -270,7 +274,17 @@ public class DockingPane : ContentControl
                 if (_dockingIndicator != null)
                 {
                     _dockingIndicator.Visibility = Visibility.Collapsed;
+
+                    Debug.WriteLine($"➔ [DEBUG] (部屋Hash: {this.GetHashCode()}) _dockingIndicator.Visibility = Visibility.Visibility.Collapsed");
+
                     Debug.WriteLine("➔ [DEBUG] ★最終執行：WPFの遅延更新を完全に上書きして非表示化！");
+
+
+                     
+                    IPaneNode? rootNode = sourceNode;
+                    while (rootNode?.Parent != null) rootNode = rootNode.Parent;
+                    rootNode?.ClearAllIndicators();
+
                 }
 
                 // ★【究極の修正】：役目を終えた仕切り線バーを、親コンテナから安全に完全消滅（Collapsed）させる
@@ -279,6 +293,8 @@ public class DockingPane : ContentControl
                 {
                     parentPane.ShowSplitterIndicators(false);
                 }
+
+                 
             }), DispatcherPriority.Render);
         }
     }
@@ -415,7 +431,7 @@ public class DockingPane : ContentControl
                 Debug.WriteLine("中に入った");
 
                 _dockingIndicator.Visibility = Visibility.Visible;
-                Debug.WriteLine("_dockingIndicator Visible");
+                Debug.WriteLine($"➔ [DEBUG] (部屋Hash: {this.GetHashCode()}) _dockingIndicator.Visibility = Visibility.Visibility.Visible");
 
             }
         }
@@ -426,7 +442,7 @@ public class DockingPane : ContentControl
     {
         if (_dockingIndicator != null) _dockingIndicator.Visibility = Visibility.Collapsed;
 
-    //    Debug.WriteLine("出た");
+        Debug.WriteLine("出た");
 
 
         // 部屋から去る時は、仕切り線バーのフラグを一斉に強制消滅させる
@@ -451,7 +467,7 @@ public class DockingPane : ContentControl
         if (!(e.Data.GetData(typeof(TokiDragDropPayload)) is TokiDragDropPayload payload)) return;
 
         IPaneNode sourceNode = payload.SourceNode;
-        object draggedData = payload.DraggedData;
+        TabViewModel draggedData = payload.DraggedData;
 
         // 1. 【自己破壊ガード】最後の1枚しか無い状態で同じ部屋に落とされた場合は完全スルー
         if (sourceNode == targetNode && sourceNode.TabViewModels.Count <= 1)
@@ -499,7 +515,7 @@ public class DockingPane : ContentControl
         // 3. 【先攻引き抜き】：トポロジー変更前に、ドラッグ元からタブを消去しツリーを緊縮
         if (sourceNode != null && sourceNode.TabViewModels != null)
         {
-            int dragIndex = sourceNode.TabViewModels.IndexOf(draggedData);
+            int dragIndex = sourceNode.TabViewModels.FindIndex(x => x == draggedData);
             if (dragIndex >= 0)
             {
                 sourceNode.RemoveTab(dragIndex);
@@ -529,7 +545,7 @@ public class DockingPane : ContentControl
                     SubChild = targetNode.SubChild?.SubChild,
                     Orientation = targetNode.SubChild?.Orientation ?? EnumOrientation.Horizontal,
                     SplitRatio = targetNode.SubChild?.SplitRatio ?? 0.5,
-                    TabViewModels = targetNode.SubChild?.TabViewModels ?? new List<object>(),
+                    TabViewModels = targetNode.SubChild?.TabViewModels ?? new List<TabViewModel>(),
                     SelectedTabIndex = targetNode.SubChild?.SelectedTabIndex ?? 0
                 };
 
@@ -545,7 +561,7 @@ public class DockingPane : ContentControl
                 if (targetSub != null)
                 {
                     // 自身のこれまでのタブ資産をクリーンに初期化
-                    targetSub.TabViewModels = new List<object>();
+                    targetSub.TabViewModels = new List<TabViewModel>();
                     targetSub.ViewModel = null;
 
                     // 分割方向を指定（ドロップされたインジケーターに合わせて部屋を割る）
@@ -649,6 +665,7 @@ public class DockingPane : ContentControl
         if (_verticalSplitterIndicator != null) _verticalSplitterIndicator.Visibility = Visibility.Collapsed;
         if (_horizontalSplitterIndicator != null) _horizontalSplitterIndicator.Visibility = Visibility.Collapsed;
 
+
         e.Handled = true;
     }
 
@@ -710,24 +727,36 @@ public class DockingPane : ContentControl
         QueueRefreshVisualState();
     }
 
+
+    public void ClearIndicators()
+    {
+        if (_dockingIndicator != null)
+        {
+            _dockingIndicator.Visibility = Visibility.Collapsed;
+            Debug.WriteLine($"➔ [DEBUG] (部屋Hash: {this.GetHashCode()}) _dockingIndicator.Visibility = Collapsed.Visibility.Collapsed");
+
+        }
+        if (_verticalSplitterIndicator != null)
+        {
+            //Debug.WriteLine($"{DateTime.Now}:COMMAND_CLEAR_INDICATORS：_verticalSplitterIndicatorを非表示");
+
+            _verticalSplitterIndicator.Visibility = Visibility.Collapsed;
+        }
+        if (_horizontalSplitterIndicator != null)
+        {
+            //        Debug.WriteLine($"{DateTime.Now}:COMMAND_CLEAR_INDICATORS：_horizontalSplitterIndicatorを非表示");
+
+            _horizontalSplitterIndicator.Visibility = Visibility.Collapsed;
+        }
+    }
+
     private void OnNodePropertyChanged(object sender, PropertyChangedEventArgs e)
     {
        // Debug.WriteLine($"{DateTime.Now}:OnNodePropertyChanged");
 
         if (e.PropertyName == "COMMAND_CLEAR_INDICATORS")
         {
-            if (_verticalSplitterIndicator != null)
-            {
-                //Debug.WriteLine($"{DateTime.Now}:COMMAND_CLEAR_INDICATORS：_verticalSplitterIndicatorを非表示");
-
-                _verticalSplitterIndicator.Visibility = Visibility.Collapsed;
-            }
-            if (_horizontalSplitterIndicator != null)
-            {
-        //        Debug.WriteLine($"{DateTime.Now}:COMMAND_CLEAR_INDICATORS：_horizontalSplitterIndicatorを非表示");
-
-                _horizontalSplitterIndicator.Visibility = Visibility.Collapsed;
-            }
+            ClearIndicators();
             return; // 描画更新（Queue〜）までは走らせずに、消灯だけを最速執行してリターン
         }
 
@@ -874,7 +903,26 @@ public class DockingPane : ContentControl
                     presenter.Content = null;
                     presenter.Content = node.TabViewModels[i];
                 }
-                _tabContentContainer.Children[i].Visibility = (i == selectedIndex) ? Visibility.Visible : Visibility.Collapsed;
+
+                if (i == selectedIndex)
+                {
+
+                    node.RaisePropertyChanged("ActiveViewModel");
+
+
+                    _tabContentContainer.Children[i].Visibility = Visibility.Visible;
+                      
+                    _dockingIndicator.Visibility = Visibility.Collapsed;
+
+                }
+          
+                else
+                {
+                    _tabContentContainer.Children[i].Visibility = Visibility.Collapsed;
+
+                }
+
+                //_tabContentContainer.Children[i].Visibility = (i == selectedIndex) ? Visibility.Visible : Visibility.Collapsed;
             }
             else
             {

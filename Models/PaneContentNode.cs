@@ -4,14 +4,12 @@ using TokiDockingPane.Interfaces;
 
 namespace TokiDockingPane.Models;
 
- 
-
 
 
 /// <summary>
 /// 分割方向と2つの子ノードを再帰ネスト保持する、1バイト無駄のないレイアウトModel
 /// </summary>
- 
+
 public partial class PaneContentNode :ObservableObject , IPaneNode
 {
     [ObservableProperty]
@@ -25,7 +23,8 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
     [ObservableProperty]
     private EnumOrientation _orientation;
-   
+
+    [ObservableProperty] private string _title = string.Empty;
 
     [ObservableProperty]
     private double _splitRatio = 0.5;    // Gridの * 寸法（Width/Height）にダイレクト連動
@@ -40,7 +39,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     // 各タブの実体データ（ViewModelポインタ）を保持するリスト
     // ※ 1バイト管理思想に基づき、初期化時に一定数をプールするアプローチも可能
     [ObservableProperty]
-    private List<object> _tabViewModels = new();
+    private List<TabViewModel> _tabViewModels = new();
 
 
     /// <summary>
@@ -52,20 +51,31 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         {
             if (_tabViewModels == null || _tabViewModels.Count == 0 || _selectedTabIndex < 0 || _selectedTabIndex >= _tabViewModels.Count)
                 return null;
-            return _tabViewModels[_selectedTabIndex];
+            return _tabViewModels[_selectedTabIndex].ViewModel;
         }
     }
 
+    public TabViewModel? SelectedTab
+    {
+        get
+        {
+            if (TabViewModels == null || TabViewModels.Count == 0 || SelectedTabIndex < 0 || SelectedTabIndex >= TabViewModels.Count)
+                return null;
 
+            // ラッパーである TabViewModel のポインタそのものを手渡す！
+            return TabViewModels[SelectedTabIndex];
+        }
+    }
 
     /// <summary>
     /// 実体ペイン（葉ノード）用コンストラクタ
     /// </summary>
 
-    public PaneContentNode(object vm)
+
+    public PaneContentNode(TabViewModel tab)
     {
-        _tabViewModels.Add(vm);
-        _selectedTabIndex = 0;
+        TabViewModels = new List<TabViewModel> { tab };
+        SelectedTabIndex = 0;
     }
 
     /// <summary>
@@ -80,27 +90,30 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     /// <summary>
     /// このペインに新しくタブを追加する（1本道非同期パイプラインへの直結用）
     /// </summary>
-    public void AddTab(object vm)
+    public void AddTab(TabViewModel tab)
     {
         // 1. 既存のリストのポインタを新しいインスタンス（ shallow copy ）へ一発置換
-        //    これによりWPFのバインディングエンジンは「全く新しいリストが来た」と検知し、
-        //    ListBoxのヘッダーを一瞬（0ms）で再描画します。
-        var newList = new List<object>(_tabViewModels) { vm };
-        TabViewModels = newList; // 自動生成されたプロパティセッター経由でアドレス変更をWPFへ叩き込む
+        //    これによりWPFのバインディングエンジンは「全く新しいリストが来た」と検知し、0msでヘッダーを再描画します。
+        var newList = new List<TabViewModel>(TabViewModels) { tab };
+        TabViewModels = newList;
 
         // 2. 追加された新規タブへ自動的にフォーカス（選択）を移動させる
-        SelectedTabIndex = TabViewModels.Count - 1;
+      //  SelectedTabIndex = TabViewModels.Count - 1;
+
+        // 3. アクティブな中身が変わったことをWPFの ContentPresenter へ向けて電撃通知！
+        OnPropertyChanged(nameof(ActiveViewModel));
     }
+
     /// <summary>
     /// 【診断用暫定コード】画面の収縮（消滅）ロジックを完全にオミットし、
     /// 純粋に「リストからポインタを引き抜いてインデックスを合わせるだけ」の処理に固定する
     /// </summary>
-    public void _RemoveTab(int index)
+    public virtual void _RemoveTab(int index)
     {
         if (_tabViewModels == null || index < 0 || index >= _tabViewModels.Count) return;
 
         // 純粋に要素を1枚引き抜くだけ（画面を閉じる・詰める処理は1行も走らせない）
-        var newList = new List<object>(_tabViewModels);
+        var newList = new List<TabViewModel>(_tabViewModels);
         newList.RemoveAt(index);
         TabViewModels = newList;
 
@@ -116,11 +129,11 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     /// <summary>
     /// タブ引き抜き処理（トポロジーの自動自動クリーンアップ内包）
     /// </summary>
-    public void RemoveTab(int index)
+    public virtual void RemoveTab(int index)
     {
         if (_tabViewModels == null || index < 0 || index >= _tabViewModels.Count) return;
 
-        var newList = new List<object>(_tabViewModels);
+        var newList = new List<TabViewModel>(TabViewModels);
         newList.RemoveAt(index);
         TabViewModels = newList;
 
@@ -245,7 +258,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     /// <summary>
     /// このペインをその場で縦割（左右）コンテナへとトランスフォームさせる（アロケーション最小化）
     /// </summary>
-    public void SplitVertical(object newViewModel)
+    public void SplitVertical(TabViewModel newViewModel)
     {
         // 1. 自身の現在の全タブ資産を引き継ぐ「左側（Main）」のクローンノードを生成
         IPaneNode leftNode = new PaneContentNode
@@ -263,7 +276,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
         // 3. 自身のペインデータをクリーンに切断（自身はコンテナ枠へ昇華するため）
         //this.TabViewModels = null!;
-        this.TabViewModels = new List<object>();
+        this.TabViewModels = new List<TabViewModel>(TabViewModels);
 
 
         // 4. トポロジーの書き換え ➔ WPF側が感知して一瞬で画面が割れる
@@ -279,7 +292,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     /// <summary>
     /// このペインをその場で横割（上下）コンテナへとトランスフォームさせる
     /// </summary>
-    public void SplitHorizontal(object newViewModel)
+    public void SplitHorizontal(TabViewModel newViewModel)
     {
         // 1. 自身の現在の全タブ資産を引き継ぐ「上側（Main）」のクローンノードを生成
         IPaneNode topNode = new PaneContentNode
@@ -295,7 +308,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         bottomNode.Parent = this;
 
         //this.TabViewModels = null!;
-        this.TabViewModels = new List<object>();
+        this.TabViewModels = new List<TabViewModel>();
 
 
 
@@ -318,7 +331,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     /// <summary>
     /// ★ アウタードッキング：現在のツリー全体をまるごと「上側」へ押し込め、下側に新しい部屋を横断展開する（青線）
     /// </summary>
-    public void OuterSplitHorizontal(object newViewModel)
+    public void OuterSplitHorizontal(TabViewModel newViewModel)
     {
         // 1. 自分自身の現在の全トポロジー子孫（4画面すべて）をそのまま引き継ぐクローンを生成
         var oldRootClone = new PaneContentNode
@@ -335,7 +348,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         var bottomNode = new PaneContentNode(newViewModel);
 
         // 3. 自分自身（最上位ルート）をコンテナ枠へ変身させ、新旧を上下にガチッと直結！
-        this.TabViewModels = new List<object>();
+        this.TabViewModels = new List<TabViewModel>();
         this.Orientation = EnumOrientation.Horizontal;
         this.MainChild = oldRootClone;
         this.SubChild = bottomNode;
@@ -346,7 +359,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         // 全通知を撃ってWPFのGridを一瞬で書き換え
         RaisePropertyChanged(string.Empty);
     }
-    public void OuterSplitVertical(object newViewModel)
+    public void OuterSplitVertical(TabViewModel newViewModel)
     {
         // 1. 自分自身の現在の全トポロジー子孫（4画面すべて）をそのまま引き継ぐクローンを生成
         var oldRootClone = new PaneContentNode
@@ -363,7 +376,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         var bottomNode = new PaneContentNode(newViewModel);
 
         // 3. 自分自身（最上位ルート）をコンテナ枠へ変身させ、新旧を上下にガチッと直結！
-        this.TabViewModels = new List<object>();
+        this.TabViewModels = new List<TabViewModel>();
         this.Orientation = EnumOrientation.Vertical;
         this.MainChild = oldRootClone;
         this.SubChild = bottomNode;

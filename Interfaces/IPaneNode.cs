@@ -11,6 +11,29 @@ namespace TokiDockingPane.Interfaces;
 
 
 
+[ObservableObject]
+public partial class TabViewModel
+{
+    [ObservableProperty]
+    string _title = "";
+
+
+    [ObservableProperty]
+    private object? _viewModel;
+
+    public TabViewModel()
+    {
+
+    }
+
+    public TabViewModel(string title, object vm)
+    {
+        _title = title;
+        _viewModel = vm;
+
+    }
+
+}
 /// <summary>
 /// ペインの分割方向（WPF Gridの行・列駆動に直結）
 /// </summary>
@@ -39,23 +62,27 @@ public interface IPaneNode : IDisposable, INotifyPropertyChanged
     public  int SelectedTabIndex { get; set; }
 
     // タブに内包されている実体データ（ViewModel）の一覧
-    public List<object> TabViewModels { get; set; }
+    public List<TabViewModel> TabViewModels { get; set; }
 
     // 現在アクティブな画面の中身
     object? ActiveViewModel { get; }
 
+    public TabViewModel? SelectedTab { get; }
+
+
+    public void AddTab(TabViewModel tab);
     // タブを引き抜く（Remove）ための共通駆動
     void RemoveTab(int index);
 
     void RaisePropertyChanged(string propertyName);
 
-    public void SplitHorizontal(object newViewModel);
+    public void SplitHorizontal(TabViewModel newViewModel);
 
-    public void SplitVertical(object newViewModel);
+    public void SplitVertical(TabViewModel newViewModel);
 
-    public void AddTab(object vm);
-    void OuterSplitHorizontal(object newViewModel);
-    void OuterSplitVertical(object newViewModel);
+
+    void OuterSplitHorizontal(TabViewModel newViewModel);
+    void OuterSplitVertical(TabViewModel newViewModel);
 
     void ClearAllIndicators();
 
