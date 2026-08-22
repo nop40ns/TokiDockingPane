@@ -87,8 +87,14 @@ public class DockingPane : ContentControl
             _tabItemBorder.PreviewMouseLeftButtonDown -= OnTabHeaderMouseLeftButtonDown;
             _tabItemBorder.PreviewMouseMove -= OnTabHeaderMouseMove;
         }
-         
 
+        // 💡 テンプレート内からピンボタンを安全に捕獲
+        var pinButton = GetTemplateChild("PART_PinButton") as Button;
+        if (pinButton != null)
+        {
+            pinButton.Click -= OnPinButtonClick; // 二重登録防止
+            pinButton.Click += OnPinButtonClick;
+        }
 
         _tabContentContainer = GetTemplateChild("PART_TabContentContainer") as Grid;
         _headerScrollViewer = GetTemplateChild("PART_HeaderScrollViewer") as ScrollViewer;
@@ -107,9 +113,23 @@ public class DockingPane : ContentControl
         QueueRefreshVisualState();
     }
 
-  
 
 
+    private void OnPinButtonClick(object sender, RoutedEventArgs e)
+    {
+        if (!(this.DataContext is PaneContentNode node)) return;
+
+        // 📌 フラグを反転させる (常時表示 ⇄ 自動非表示対象)
+        node.IsPinned = !node.IsPinned;
+        node.IsAutoHidden = !node.IsPinned; // ピンが外れたら即座に隠す
+
+        System.Diagnostics.Debug.WriteLine($"ピン状態変更: IsPinned={node.IsPinned}, IsAutoHidden={node.IsAutoHidden}");
+
+        // 最上位ルートまで遡ってWPFへ更新を電撃通知
+        IPaneNode? root = node;
+        while (root?.Parent != null) root = root.Parent;
+        root?.RaisePropertyChanged(string.Empty);
+    }
 
     // ツール移動用のマウス座標キャッシュ変数
     private Point _toolDragStartPoint;

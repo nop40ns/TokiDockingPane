@@ -196,72 +196,76 @@ public class DockingPaneViewModel : Control
         Point dropPos = e.GetPosition(this); // インジケータ全体の Grid を基準にした座標
         IInputElement hitElement = this.InputHitTest(dropPos);
 
-        bool isTopHit = false;
-        bool isBottomHit = false;
-        bool isLeftHit = false;
-        bool isRightHit = false;
+        bool isTopHit = (dropPos.Y >= 0 && dropPos.Y <= 24);
+        bool isBottomHit = (dropPos.Y >= (this.ActualHeight - 24) && dropPos.Y <= this.ActualHeight);
+        bool isLeftHit = (dropPos.X >= 0 && dropPos.X <= 24);
+        bool isRightHit = (dropPos.X >= (this.ActualWidth - 24) && dropPos.X <= this.ActualWidth);
 
-        if (dropPos.Y >= 0 && dropPos.Y <= 24)
-        {
-            isTopHit = true;
-        }
-        // B. 右端バー：X座標が「全体の横幅 - 24ピクセル」から「全体の横幅」の範囲内
-        else if (dropPos.X >= (this.ActualWidth - 24) && dropPos.X <= this.ActualWidth)
-        {
-            isRightHit = true;
-        }
-        // マウスが落とされたインジケーターの境界判定
         if (isTopHit)
         {
-            // A. 【青線の場所（アウター上）への着地】
-            if (sourceNode != null && sourceNode.TabViewModels != null)
-            {
-                int dragIndex = sourceNode.TabViewModels.IndexOf(draggedData);
-                if (dragIndex >= 0) sourceNode.RemoveTab(dragIndex);
-            }
-
-            // ★【核心修正】：具象クラスへのキャストを完全廃棄！
-            // RootDocumentNode（IPaneNode）が持つアウター分割メソッドをダイレクトに叩き込みます
-            if (RootDocumentNode != null)
-            {
-                RootDocumentNode.OuterSplitHorizontal(draggedData);
-            }
+            // 👆 上端：上下分割（Vertical）、新しいツールを上（Main）に挿入
+            ExecuteOuterDock(sourceNode, draggedData, EnumOrientation.Horizontal, insertAsMain: true);
+        }
+        else if (isBottomHit)
+        {
+            // 👇 下端：上下分割（Vertical）、新しいツールを下（Sub）に挿入
+            ExecuteOuterDock(sourceNode, draggedData, EnumOrientation.Horizontal, insertAsMain: false);
+        }
+        else if (isLeftHit)
+        {
+            // 👈 左端：左右分割（Horizontal）、新しいツールを左（Main）に挿入
+            ExecuteOuterDock(sourceNode, draggedData, EnumOrientation.Vertical, insertAsMain: true);
         }
         else if (isRightHit)
         {
-            // B. 【赤線の場所（アウター右）への着地】
-            int dragIndex = sourceNode.TabViewModels.IndexOf(draggedData);
-
-            var dropPain = sourceNode.TabViewModels[dragIndex];
-
-
-            if (dragIndex >= 0) sourceNode.RemoveTab(dragIndex);
-
-            var newToolLeaf = new PaneContentNode(dropPain, isToolPane: true);
-            newToolLeaf.CanAutoHide = true; // AutoHiddenの資格を付与
-            newToolLeaf.IsToolPane = true;
-
-            var _sub = RootDocumentNode;
-
-            var newNode = new PaneContentNode(isToolPane: false);
-            newNode.Orientation = EnumOrientation.Vertical; // 左右分割
-
-            newNode.MainChild = _sub;
-            if (_sub != null) _sub.Parent = newNode; // 古い子ノードの親を newNode に上書き
-
-            newNode.SubChild = newToolLeaf;
-            newToolLeaf.Parent = newNode; // ツールペインの親を newNode に指定
-
-            RootDocumentNode = newNode;
-
-//            newNode.Parent = RootDocumentNode;
-
-            this.RootDocumentNode?.RaisePropertyChanged(string.Empty);
-
+            // 👉 右端：左右分割（Horizontal）、新しいツールを右（Sub）に挿入
+            ExecuteOuterDock(sourceNode, draggedData, EnumOrientation.Vertical, insertAsMain: false);
         }
 
         e.Handled = true;
     }
 
+    // ⭕ DockingPaneViewModel.cs 内に追加する共通トポロジー組み替えメソッド
+    private void ExecuteOuterDock(IPaneNode sourceNode, TabViewModel draggedData, EnumOrientation orientation, bool insertAsMain)
+    {
+        int dragIndex = sourceNode.TabViewModels.IndexOf(draggedData);
+        if (dragIndex < 0) return;
+
+        var dropPain = sourceNode.TabViewModels[dragIndex];
+        sourceNode.RemoveTab(dragIndex);
+
+        // 💡 1. 引き抜いたタブを詰め込んだ、独立した新しい「ツールペイン（葉）」を生成
+        var newToolLeaf = new PaneContentNode(dropPain, isToolPane: true);
+        newToolLeaf.CanAutoHide = true;
+        newToolLeaf.IsToolPane = true;
+
+        // 💡 2. これまでの画面全体のルート（ツリー全体）を退避して確保
+        var oldRoot = RootDocumentNode;
+
+        // 💡 3. 画面全体を丸ごと外側から包み込む「新しい最外殻コンテナ」を生成
+        var newOuterRoot = new PaneContentNode(isToolPane: false);
+        newOuterRoot.Orientation = orientation; // 引数から縦割り・横割りを指定
+
+        // 💡 4. ドロップされた方角（引数）に応じて、新旧のノードを「Main」と「Sub」に賢く振り分ける
+        if (insertAsMain)
+        {
+            // 👈 左（Left）または 👆 上（Top）にドロップされた場合：新しいツールが左（上）に来る
+            newOuterRoot.MainChild = newToolLeaf; newToolLeaf.Parent = newOuterRoot;
+            newOuterRoot.SubChild = oldRoot; if (oldRoot != null) oldRoot.Parent = newOuterRoot;
+        }
+        else
+        {
+            // 👉 右（Right）または 👇 下（Bottom）にドロップされた場合：新しいツールが右（下）に来る
+            newOuterRoot.MainChild = oldRoot; if (oldRoot != null) oldRoot.Parent = newOuterRoot;
+            newOuterRoot.SubChild = newToolLeaf; newToolLeaf.Parent = newOuterRoot;
+        }
+
+        // 💡 5. 頂点（RootDocumentNode）のアドレスを、新しく組み立てた巨大なコンテナへと完全繋ぎ替え！
+        RootDocumentNode = newOuterRoot;
+
+        // 💡 6. ツリー全体に構造変更をWPFへ電撃通知して一撃で再レンダリングさせる
+        this.RootDocumentNode?.RaisePropertyChanged(string.Empty);
+        if (oldRoot != null) oldRoot.RaisePropertyChanged(string.Empty);
+    }
 
 }

@@ -38,9 +38,10 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
     [ObservableProperty]
     private bool _isToolPane = false;
-     
 
-    
+    [ObservableProperty]
+    private bool _isPinned = false;
+
     [ObservableProperty]
     private bool _canAutoHide = false;
 
