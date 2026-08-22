@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System.ComponentModel;
 using TokiDockingPane.Interfaces;
 
@@ -51,7 +52,32 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
 
 
+    [RelayCommand]
+    private void TogglePin(object parameter)
+    {
+        // 📌 自分の部屋のピン留め状態をパチパチと反転させる
+        this.IsPinned = !this.IsPinned;
+        this.IsAutoHidden = !this.IsPinned; // ピンが外れたら即座に自動隠蔽対象にする
 
+        System.Diagnostics.Debug.WriteLine($"[AutoHidden] ノード単体制御: IsPinned={this.IsPinned}, IsAutoHidden={this.IsAutoHidden}");
+
+        if (parameter is ViewModels.DockingPaneViewModel mainVM)
+        {
+            mainVM.RefreshHiddenPanes();
+
+        }
+
+
+        // 🌲 ツリーの真の最上位（Root）まで一気に遡る
+        IPaneNode? root = this;
+        while (root?.Parent != null) root = root.Parent;
+
+
+
+
+        // 画面全体の再描画（DataTriggerの即時適用）をWPFへ強烈に通知！
+        root?.RaisePropertyChanged(string.Empty);
+    }
 
     partial void OnSelectedTabIndexChanged(int oldValue, int newValue)
     {
@@ -291,6 +317,10 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         GC.SuppressFinalize(this);
     }
 
+
+
+
+     
     /// <summary>
     /// このペインをその場で縦割（左右）コンテナへとトランスフォームさせる（アロケーション最小化）
     /// </summary>

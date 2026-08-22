@@ -90,14 +90,7 @@ public partial class DockingPane : ContentControl
             _tabItemBorder.PreviewMouseLeftButtonDown -= OnTabHeaderMouseLeftButtonDown;
             _tabItemBorder.PreviewMouseMove -= OnTabHeaderMouseMove;
         }
-
-        // 💡 テンプレート内からピンボタンを安全に捕獲
-        var pinButton = GetTemplateChild("PART_PinButton") as Button;
-        if (pinButton != null)
-        {
-            pinButton.Click -= OnPinButtonClick; // 二重登録防止
-            pinButton.Click += OnPinButtonClick;
-        }
+         
 
         _tabContentContainer = GetTemplateChild("PART_TabContentContainer") as Grid;
         _headerScrollViewer = GetTemplateChild("PART_HeaderScrollViewer") as ScrollViewer;
@@ -117,39 +110,7 @@ public partial class DockingPane : ContentControl
     }
 
 
-    [RelayCommand]
-    private void TogglePin(object parameter)
-    {
-        if (!(this.DataContext is PaneContentNode node)) return;
-
-        // 📌 フラグをパチッと反転させる (常時表示 ⇄ 自動非表示対象)
-        node.IsPinned = !node.IsPinned;
-        node.IsAutoHidden = !node.IsPinned; // ピンが外れたら即座に隠す
-
-        System.Diagnostics.Debug.WriteLine($"[AutoHidden] ピン状態が切り替わりました: IsPinned={node.IsPinned}, IsAutoHidden={node.IsAutoHidden}");
-
-        // 🌲 ツリーの真の最上位（Root）まで一気に遡る
-        IPaneNode? root = node;
-        while (root?.Parent != null) root = root.Parent;
-
-        // 画面全体の再描画をWPFへ強烈に通知！
-        root?.RaisePropertyChanged(string.Empty);
-    }
-    private void OnPinButtonClick(object sender, RoutedEventArgs e)
-    {
-        if (!(this.DataContext is PaneContentNode node)) return;
-
-        // 📌 フラグを反転させる (常時表示 ⇄ 自動非表示対象)
-        node.IsPinned = !node.IsPinned;
-        node.IsAutoHidden = !node.IsPinned; // ピンが外れたら即座に隠す
-
-        System.Diagnostics.Debug.WriteLine($"ピン状態変更: IsPinned={node.IsPinned}, IsAutoHidden={node.IsAutoHidden}");
-
-        // 最上位ルートまで遡ってWPFへ更新を電撃通知
-        IPaneNode? root = node;
-        while (root?.Parent != null) root = root.Parent;
-        root?.RaisePropertyChanged(string.Empty);
-    }
+   
 
     // ツール移動用のマウス座標キャッシュ変数
     private Point _toolDragStartPoint;
@@ -718,7 +679,15 @@ public partial class DockingPane : ContentControl
         {
             if (targetIndicatorName == "PART_IndicatorCenter")
             {
-                targetNode.AddTab(draggedData); // 中央は単純結合
+              //  targetNode.AddTab(draggedData); // 中央は単純結合
+
+                if (targetNode.IsToolPane || (sourceNode != null && sourceNode.IsToolPane))
+                {
+                    if (_dockingIndicator != null) _dockingIndicator.Visibility = Visibility.Collapsed;
+                    e.Handled = true;
+                    return; // ➔ 何もさせずに安全に処理を終了（ポイッ）
+                }
+
             }
             else
             {

@@ -51,7 +51,8 @@ public interface IPaneNode : IDisposable, INotifyPropertyChanged
     public IPaneNode? Parent { get; set; }
     public bool IsToolPane { get; set; }
 
-    
+    public bool IsAutoHidden { get; set; }
+
     public EnumOrientation Orientation { get; set; }
 
      

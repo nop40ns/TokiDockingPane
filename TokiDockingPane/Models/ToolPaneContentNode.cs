@@ -35,18 +35,7 @@ public partial class ToolPaneContentNode : PaneContentNode
     }
 
 
-    [RelayCommand]
-    private void TogglePin()
-    {
-        if (State == EnumToolState.Docked)
-        {
-            State = EnumToolState.AutoHidden;
-        }
-        else if (State == EnumToolState.AutoHidden)
-        {
-            State = EnumToolState.Docked;
-        }
-    }
+ 
 
     // 🔥【新章】ホバー時に外からポインタ駆動される開閉コマンド
     [RelayCommand] private void OpenPopup() => IsPopupOpened = true;

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -18,8 +19,8 @@ namespace TokiDockingPane.ViewModels;
 [TemplatePart(Name = "PART_IndicatorOuterLeft", Type = typeof(Border))]
 [TemplatePart(Name = "PART_IndicatorOuterRight", Type = typeof(Border))]
 
-
-public class DockingPaneViewModel : Control
+[ObservableObject]
+public partial class DockingPaneViewModel : Control
 {
     public static readonly DependencyProperty RootDocumentNodeProperty =
         DependencyProperty.Register(nameof(RootDocumentNode), typeof(IPaneNode), typeof(DockingPaneViewModel), new PropertyMetadata(null));
@@ -38,6 +39,11 @@ public class DockingPaneViewModel : Control
     private Border? _outerRight;
     private Border? _outerBottom;
     private Border? _outerLeft;
+
+    public IEnumerable<PaneContentNode> RightHiddenPanes => GetHiddenPanes(RootDocumentNode).Where(n => IsRightOuter(n));
+    // 👈 左側に隠れているツールのリスト
+    public IEnumerable<PaneContentNode> LeftHiddenPanes => GetHiddenPanes(RootDocumentNode).Where(n => IsLeftOuter(n));
+    // 
 
 
     static DockingPaneViewModel()
@@ -84,6 +90,46 @@ public class DockingPaneViewModel : Control
 
         _outerRight.Drop += OnOuterDrop;
 
+    }
+
+    // 【裏方のツリー巡回ロジック】隠れている末端ノードをすべて抽出する
+    private List<PaneContentNode> GetHiddenPanes(IPaneNode? root)
+    {
+        var list = new List<PaneContentNode>();
+        if (root is PaneContentNode node)
+        {
+            if (node.IsAutoHidden && node.IsToolPane) list.Add(node);
+            list.AddRange(GetHiddenPanes(node.MainChild));
+            list.AddRange(GetHiddenPanes(node.SubChild));
+        }
+        return list;
+    }
+
+
+    private bool IsLeftOuter(PaneContentNode node)
+    {
+        // ツリーの構造を上へと辿り、RootDocumentNode の MainChild 側の血統にいるか確認
+        IPaneNode? current = node;
+        while (current?.Parent != null && current.Parent != RootDocumentNode) current = current.Parent;
+        return RootDocumentNode?.MainChild == current;
+    }
+
+    // 【方向判定】大元のルートの SubChild 側にいれば「右側」と判定するシンプルな規律
+    private bool IsRightOuter(PaneContentNode node)
+    {
+        // ツリーの構造を上へと辿り、RootDocumentNode の SubChild 側の血統にいるか確認
+        IPaneNode? current = node;
+        while (current?.Parent != null && current.Parent != RootDocumentNode) current = current.Parent;
+        return RootDocumentNode?.SubChild == current;
+    }
+
+    public void RefreshHiddenPanes()
+    {
+        // 💡 自分の内部からであれば、PropertyChangedイベントを安全に100%発火させることができます！
+        this.PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(RightHiddenPanes)));
+        this.PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(LeftHiddenPanes)));
+
+        System.Diagnostics.Debug.WriteLine("[ViewModel] 隠しペインサイドバーの再計算通知を代理発射しました。");
     }
 
     private void OnPreviewMouseDown(object sender, MouseEventArgs  e)

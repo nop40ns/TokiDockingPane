@@ -60,9 +60,19 @@ public partial class MainWindow : Window
         rootDocument.MainChild = nodeTop; nodeTop.Parent = rootDocument;
         rootDocument.SubChild = nodeBottom; nodeBottom.Parent = rootDocument;
 
+
+
+        var t1 = new PaneContentNode(new TabViewModel(l[0], new LuncherViewModelWPF(l[0])), isToolPane: true);
+        var t2 = new PaneContentNode(new TabViewModel(l[1], new LuncherViewModelWPF(l[1])), isToolPane: true);
+
         // 🔷 3. 右端のツール領域の末端ペインを生成 (isToolPane: true)
-        var solutionExplorerNode = new PaneContentNode(new TabViewModel(l[0], new LuncherViewModelWPF(l[0])), isToolPane: true);
-        solutionExplorerNode.AddTab(new TabViewModel(l[1], new LuncherViewModelWPF(l[1])));
+        var solutionExplorerNode = new PaneContentNode() { Orientation = EnumOrientation.Horizontal };
+
+        solutionExplorerNode.MainChild = t1;
+        solutionExplorerNode.SubChild = t2;
+
+        t1.Parent = solutionExplorerNode;
+        t2.Parent = solutionExplorerNode;
 
         // 🚀 4. 【ここが案Aのキモ！】「中央領域全体」と「右ツール」を Vertical（縦割り）で結合し、真の最上位ルートを作る
         var trueRoot = new PaneContentNode(isToolPane: false) { Orientation = EnumOrientation.Vertical };
