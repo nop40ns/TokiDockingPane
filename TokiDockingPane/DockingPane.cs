@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO.Packaging;
 using System.Windows;
@@ -27,7 +29,8 @@ public class TokiDragDropPayload
 
 [TemplatePart(Name = "PART_TabItemBorder", Type = typeof(Border))]
 
-public class DockingPane : ContentControl
+[ObservableObject]
+public partial class DockingPane : ContentControl
 {
     private Grid? _tabContentContainer;
     private ScrollViewer? _headerScrollViewer;
@@ -114,7 +117,24 @@ public class DockingPane : ContentControl
     }
 
 
+    [RelayCommand]
+    private void TogglePin(object parameter)
+    {
+        if (!(this.DataContext is PaneContentNode node)) return;
 
+        // 📌 フラグをパチッと反転させる (常時表示 ⇄ 自動非表示対象)
+        node.IsPinned = !node.IsPinned;
+        node.IsAutoHidden = !node.IsPinned; // ピンが外れたら即座に隠す
+
+        System.Diagnostics.Debug.WriteLine($"[AutoHidden] ピン状態が切り替わりました: IsPinned={node.IsPinned}, IsAutoHidden={node.IsAutoHidden}");
+
+        // 🌲 ツリーの真の最上位（Root）まで一気に遡る
+        IPaneNode? root = node;
+        while (root?.Parent != null) root = root.Parent;
+
+        // 画面全体の再描画をWPFへ強烈に通知！
+        root?.RaisePropertyChanged(string.Empty);
+    }
     private void OnPinButtonClick(object sender, RoutedEventArgs e)
     {
         if (!(this.DataContext is PaneContentNode node)) return;

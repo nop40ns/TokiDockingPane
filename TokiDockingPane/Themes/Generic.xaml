@@ -241,36 +241,52 @@
                                                         </Button.Template>
                                                     </Button>
 
-                                                    <Button x:Name="PART_PinButton"
-        Width="16"
-        Height="16"
-        Margin="0,0,5,0"
-        Background="Transparent"
-        BorderThickness="0"
-        ToolTip="自動的に隠す"
-        Visibility="Collapsed">
+                                                    <Button
+                                                        x:Name="PART_PinButton"
+                                                        Grid.Column="2"
+                                                        Width="16"
+                                                        Height="16"
+                                                        Margin="0,0,5,0"
+                                                        Background="Transparent"
+                                                        BorderThickness="0"
+                                                        Command="{Binding TogglePinCommand, RelativeSource={RelativeSource AncestorType={x:Type local:DockingPane}}}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip="自動的に隠す"
+                                                        Visibility="Visible">
+                                                        <!--  💡 引数として現在のタブ（TabViewModel）を念のため渡しておきます  -->
+                                                        >
                                                         <Button.Template>
                                                             <ControlTemplate TargetType="Button">
-                                                                <!-- 💡 解決の核心：まずは Grid や Border などのビジュアル（実体）を先に全て定義します -->
+                                                                <!--  💡 解決の核心：まずは Grid や Border などのビジュアル（実体）を先に全て定義します  -->
                                                                 <Border Background="Transparent">
-                                                                    <Path x:Name="PinPath" 
-                      Data="M8,2 L8,7 M5,4 L11,4 M5,7 L11,7 M6,7 L6,11 L8,14 L10,11 L10,7" 
-                      Stroke="#FF999999" 
-                      StrokeThickness="1.2" 
-                      RenderTransformOrigin="0.5,0.5">
+                                                                    <Path
+                                                                        x:Name="PinPath"
+                                                                        Data="M8,2 L8,7 M5,4 L11,4 M5,7 L11,7 M6,7 L6,11 L8,14 L10,11 L10,7"
+                                                                        RenderTransformOrigin="0.5,0.5"
+                                                                        Stroke="#FF999999"
+                                                                        StrokeThickness="1.2">
                                                                         <Path.RenderTransform>
-                                                                            <RotateTransform x:Name="PinRotation" Angle="0"/>
+                                                                            <RotateTransform x:Name="PinRotation" Angle="0" />
+
+
+
                                                                         </Path.RenderTransform>
+                                                                        <Path.Style>
+                                                                            <Style TargetType="Path">
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding DataContext.IsAutoHidden, RelativeSource={RelativeSource AncestorType={x:Type local:DockingPane}}}" Value="True">
+                                                                                        <Setter Property="RenderTransform">
+                                                                                            <Setter.Value>
+                                                                                                <!--  ⚡ ターゲット名を使わずに、トランスフォームごと-90度に差し替えます！  -->
+                                                                                                <RotateTransform Angle="-90" />
+                                                                                            </Setter.Value>
+                                                                                        </Setter>
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </Path.Style>
                                                                     </Path>
                                                                 </Border>
-
-                                                                <!-- 💡 ターゲットである 'PinRotation' よりも「後ろの行」にトリガーを配置します。
-                    これで WPF コンパイラがパーツの存在を 100% 認識できるようになり、エラーが完全に消滅します！ -->
-                                                                <ControlTemplate.Triggers>
-                                                                    <DataTrigger Binding="{Binding DataContext.IsAutoHidden, RelativeSource={RelativeSource AncestorType={x:Type local:DockingPane}}}" Value="True">
-                                                                        <Setter TargetName="PinRotation" Property="Angle" Value="-90" />
-                                                                    </DataTrigger>
-                                                                </ControlTemplate.Triggers>
 
                                                             </ControlTemplate>
                                                         </Button.Template>
@@ -503,7 +519,7 @@
                             <MultiDataTrigger.Setters>
                                 <Setter TargetName="PART_TabHeader" Property="DockPanel.Dock" Value="Right" />
                                 <Setter TargetName="PART_TabContentContainer" Property="Visibility" Value="Collapsed" />
- 
+
                             </MultiDataTrigger.Setters>
                         </MultiDataTrigger>
 
