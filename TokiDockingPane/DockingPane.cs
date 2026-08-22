@@ -8,6 +8,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using TokiDockingPane.Interfaces;
 using TokiDockingPane.Models;
+using TokiDockingPane.ViewModels;
 
 namespace TokiDockingPane;
 
@@ -37,6 +38,7 @@ public class DockingPane : ContentControl
     private bool _isDragging;
 
     private Grid? _dockingIndicator{ get; set; }
+    private Grid? _dockingOuterIndicator { get; set; }
 
     private static bool _isGloballyDragging;
 
@@ -85,6 +87,8 @@ public class DockingPane : ContentControl
             _tabItemBorder.PreviewMouseLeftButtonDown -= OnTabHeaderMouseLeftButtonDown;
             _tabItemBorder.PreviewMouseMove -= OnTabHeaderMouseMove;
         }
+         
+
 
         _tabContentContainer = GetTemplateChild("PART_TabContentContainer") as Grid;
         _headerScrollViewer = GetTemplateChild("PART_HeaderScrollViewer") as ScrollViewer;
@@ -155,6 +159,8 @@ public class DockingPane : ContentControl
         if (!_isToolDragging || e.LeftButton != MouseButtonState.Pressed) return;
         if (!(sender is Grid header) || !(header.Tag is IPaneNode toolNode)) return;
 
+        if (!(this.DataContext is PaneContentNode sourceNode)) return;
+
         Point currentPos = e.GetPosition(this);
         if (Math.Abs(currentPos.X - _toolDragStartPoint.X) > SystemParameters.MinimumHorizontalDragDistance ||
             Math.Abs(currentPos.Y - _toolDragStartPoint.Y) > SystemParameters.MinimumVerticalDragDistance)
@@ -185,25 +191,32 @@ public class DockingPane : ContentControl
             if (result == DragDropEffects.None)
             {
                 Point mouseScreenPos = PointToScreen(Mouse.GetPosition(this));
+                int dragIndex = sourceNode.TabViewModels.FindIndex(x => x == draggedData);
 
-                // 1. 【先攻引き抜き】：ツールノード側からタブ（中身）を引き抜いて、Stateを自動隠蔽（AutoHidden）に落とす
-                int dragIndex = toolNode.TabViewModels.IndexOf(draggedData);
                 if (dragIndex >= 0)
                 {
-                    toolNode.RemoveTab(dragIndex); // これによって右スロットが0msで「きゅっ」と格納されて消えます！
+                    // 1. 【先攻引き抜き＆空ノード格上げクリーンアップ】（ここはそのまま）
+                    sourceNode.RemoveTab(dragIndex);
+                    // ... (前述のsiblingNodeを使った格上げ処理) ...
+
+                    // 2. 【ポインタ移送】
+                    // 💡 コンストラクタの型エラーを100%回避する安全な生成とプロパティコピー
+                    var floatNode = new PaneContentNode(draggedData);
+                    floatNode.IsToolPane = sourceNode.IsToolPane; // 元の部屋のツール属性を引き継ぐ
+
+                    // 3. 【空中射出】
+                    var floatWindow = new TokiDockingPane.Views.FloatWindow(floatNode);
+                    floatWindow.Left = mouseScreenPos.X - 100;
+                    floatWindow.Top = mouseScreenPos.Y - 15;
+                    floatWindow.Show();
+                    floatWindow.Focus();
+
+                    // 4. 【ツリー構造の強制更新通知】
+                    IPaneNode? _rootNode = sourceNode;
+                    while (rootNode?.Parent != null) rootNode = _rootNode.Parent;
+                    rootNode?.RaisePropertyChanged(string.Empty);
                 }
-
-                // 2. 【ポインタ移送 ＆ 空中展開】：
-                // 引き抜いたツールのViewModelデータを保持する新しい孤立ノードを生成し、子ウィンドウを顕現！
-                var floatNode = new PaneContentNode(draggedData);
-                var floatWindow = new TokiDockingPane.Views.FloatWindow(floatNode);
-
-                floatWindow.Left = mouseScreenPos.X - 100;
-                floatWindow.Top = mouseScreenPos.Y - 15;
-                floatWindow.Show();
-                floatWindow.Focus();
             }
-
             // 空中戦の終了に伴い、すべての仕切り線バーを一斉消灯
             rootNode?.ClearAllIndicators();
         }
@@ -511,6 +524,12 @@ public class DockingPane : ContentControl
         Point localPos = e.GetPosition(this);
         string targetIndicatorName = string.Empty;
 
+        DependencyObject topVisual = this;
+        while (VisualTreeHelper.GetParent(topVisual) != null)
+        {
+            topVisual = VisualTreeHelper.GetParent(topVisual);
+        }
+
         // マウス直下のVisualを探索するレイキャストフィルター
         VisualTreeHelper.HitTest(this,
             null, // フィルターは使用しない
@@ -524,6 +543,8 @@ public class DockingPane : ContentControl
                         (element.Name.StartsWith("PART_Indicator") 
                         || element.Name.StartsWith("PART_SplitterIndicator")
                         || element.Name .EndsWith ("SplitterIndicator")
+                        || element.Name.StartsWith("PART_IndicatorOuter")
+
                         ))
                     {
                         targetIndicatorName = element.Name;
@@ -535,12 +556,10 @@ public class DockingPane : ContentControl
             }),
             new PointHitTestParameters(localPos));
 
+        if (targetIndicatorName == "") return;
 
-        if (sourceNode == targetNode.MainChild || sourceNode == targetNode.SubChild)
-        {
-            e.Handled = true;
-            return;
-        }
+        if (sourceNode == targetNode.MainChild || sourceNode == targetNode.SubChild) return;
+    
 
         // 3. 【先攻引き抜き】：トポロジー変更前に、ドラッグ元からタブを消去しツリーを緊縮
         if (sourceNode != null && sourceNode.TabViewModels != null)
@@ -655,47 +674,115 @@ public class DockingPane : ContentControl
         }
 
         // 4. 【後攻着地】：ヒットしたインジケータの名前に基づき、0msトランスフォームを執行
-        if (targetIndicatorName == "PART_IndicatorTop")
+        if (targetIndicatorName.StartsWith("PART_Indicator"))
         {
-            targetNode.SplitHorizontal(draggedData);
-            var temp = targetNode.MainChild;
-            targetNode.MainChild = targetNode.SubChild;
-            targetNode.SubChild = temp;
+            if (targetIndicatorName == "PART_IndicatorCenter")
+            {
+                targetNode.AddTab(draggedData); // 中央は単純結合
+            }
+            else
+            {
+                // 🛠 ターゲットの親コンテナを特定し、新しい分割コンテナ(中間ノード)を挿入
+                bool isHorizontal = targetIndicatorName.Contains("Top") || targetIndicatorName.Contains("Bottom");
+                bool isInsertAsMain = targetIndicatorName.Contains("Top") || targetIndicatorName.Contains("Left");
+
+                var newLeafNode = new PaneContentNode(draggedData); // 新規タブ用ノード
+                var targetParent = targetNode.Parent;
+
+                if (targetParent == null)
+                {
+                    newLeafNode.IsToolPane = true; // 画面の一番外側の端っこなのでツール化！
+                    newLeafNode.CanAutoHide = true; // AutoHiddenの資格を付与！
+                }
+                else
+                {
+                    // 通常の中央分割領域ならエディタ属性（False）を維持
+                    newLeafNode.IsToolPane = false;
+                    newLeafNode.CanAutoHide = false;
+                }
+
+
+
+                var newContainer = new PaneContentNode(); // 引数なしで生成
+                newContainer.IsToolPane = targetNode.IsToolPane; // 後からフラグをコピー
+
+
+                newContainer.Orientation = isHorizontal ? EnumOrientation.Horizontal : EnumOrientation.Vertical;
+                newContainer.Parent = targetParent;
+
+                if (targetParent != null)
+                {
+                    if (targetParent.MainChild == targetNode) targetParent.MainChild = newContainer;
+                    else if (targetParent.SubChild == targetNode) targetParent.SubChild = newContainer;
+                }
+
+                // ターゲットと新規ノードを新しい分割コンテナの子に設定
+                if (isInsertAsMain)
+                {
+                    newContainer.MainChild = newLeafNode; newLeafNode.Parent = newContainer;
+                    newContainer.SubChild = targetNode; targetNode.Parent = newContainer;
+                }
+                else
+                {
+                    newContainer.MainChild = targetNode; targetNode.Parent = newContainer;
+                    newContainer.SubChild = newLeafNode; newLeafNode.Parent = newContainer;
+                }
+            }
+
+
+
+            // 真のRootまで遡り、ツリー全体の構造変更をWPFへ通知
+            IPaneNode? rootNode = targetNode;
+            while (rootNode?.Parent != null) rootNode = rootNode.Parent;
+            rootNode?.RaisePropertyChanged(string.Empty);
         }
-        else if (targetIndicatorName == "PART_IndicatorBottom")
+        if (targetIndicatorName.StartsWith("PART_IndicatorOuter"))
         {
-            targetNode.SplitHorizontal(draggedData);
-        }
-        else if (targetIndicatorName == "PART_IndicatorLeft")
-        {
-            targetNode.SplitVertical(draggedData);
-            var temp = targetNode.MainChild;
-            targetNode.MainChild = targetNode.SubChild;
-            targetNode.SubChild = temp;
-        }
-        else if (targetIndicatorName == "PART_IndicatorRight")
-        {
-            targetNode.SplitVertical(draggedData);
-        }
-        else if (targetIndicatorName == "PART_IndicatorCenter")
-        {
-            targetNode.AddTab(draggedData);
-        }
-        else
-        {
-            double width = this.ActualWidth;
-            double height = this.ActualHeight;
-            if (localPos.X > width * 0.8) targetNode.SplitVertical(draggedData);
-            else if (localPos.Y > height * 0.8) targetNode.SplitHorizontal(draggedData);
-            else targetNode.AddTab(draggedData);
+            bool isHorizontal = targetIndicatorName.Contains("Top") || targetIndicatorName.Contains("Bottom");
+            bool isInsertAsMain = targetIndicatorName.Contains("Top") || targetIndicatorName.Contains("Left");
+
+            // 1. ドラッグされた中身を新しいツールペインとして生成 (IsToolPane = true)
+            var newToolNode = new PaneContentNode(draggedData, isToolPane: true);
+            newToolNode.CanAutoHide = true;
+
+            // 2. 現在の「真の最上位ルートノード」を引っ張ってくる
+            IPaneNode? currentRoot = targetNode;
+            while (currentRoot?.Parent != null) currentRoot = currentRoot.Parent;
+
+            if (currentRoot != null && currentRoot is PaneContentNode oldRoot)
+            {
+                // 3. 画面全体を丸ごと包み込む「新しい最外殻コンテナ」を new する
+                var newOuterRoot = new PaneContentNode(isToolPane: false);
+                newOuterRoot.Orientation = isHorizontal ? EnumOrientation.Horizontal : EnumOrientation.Vertical;
+
+                // 4. 新しい最外殻コンテナの下に、「これまでの画面全体」と「新しいツールペイン」をぶら下げる
+                if (isInsertAsMain)
+                {
+                    newOuterRoot.MainChild = newToolNode; newToolNode.Parent = newOuterRoot;
+                    newOuterRoot.SubChild = oldRoot; oldRoot.Parent = newOuterRoot;
+                }
+                else
+                {
+                    newOuterRoot.MainChild = oldRoot; oldRoot.Parent = newOuterRoot;
+                    newOuterRoot.SubChild = newToolNode; newToolNode.Parent = newOuterRoot;
+                }
+
+                // 5. 【超重要】ViewModelが持っている大元のRootNodeプロパティを、新しい最外殻コンテナへ繋ぎ替える！
+                if (this.DataContext is DockingPaneViewModel mainVM)
+                {
+                    mainVM.RootDocumentNode = newOuterRoot; // ➔ ここで真の頂点アドレスが完全にすり替わります
+                }
+            }
+
+            // ツリー変更をWPFに電撃通知して、画面全体のレイアウトを一撃で再変形させる
+            targetNode.RaisePropertyChanged(string.Empty);
+
+            if (_dockingIndicator != null) _dockingIndicator.Visibility = Visibility.Collapsed;
+             return; // 最外殻処理が終わったのでメソッドを抜ける
         }
 
-        // 5. 最終執行：出現していたすべてのインジケータを確実に一斉成仏
+        // 5. 【後攻完全クリーンアップ】
         if (_dockingIndicator != null) _dockingIndicator.Visibility = Visibility.Collapsed;
-        if (_verticalSplitterIndicator != null) _verticalSplitterIndicator.Visibility = Visibility.Collapsed;
-        if (_horizontalSplitterIndicator != null) _horizontalSplitterIndicator.Visibility = Visibility.Collapsed;
-
-
         e.Handled = true;
     }
 

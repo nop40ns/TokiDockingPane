@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using TokiDockingPane.Interfaces;
 using TokiDockingPane.Models;
 
@@ -11,9 +12,13 @@ namespace TokiDockingPane.ViewModels;
 /// 👑 【最外殻統治コントロール】
 /// 画面全体を横断するアウタードッキング（青線・赤線）を完全に支配するカスタムコントロール
 /// </summary>
-[TemplatePart(Name = "PART_OuterDockingIndicator", Type = typeof(Grid))]
-[TemplatePart(Name = "PART_OuterTop", Type = typeof(Border))]
-[TemplatePart(Name = "PART_OuterRight", Type = typeof(Border))]
+[TemplatePart(Name = "PART_IndicatorOuter", Type = typeof(Grid))]
+[TemplatePart(Name = "PART_IndicatorOuterTop", Type = typeof(Grid))]
+[TemplatePart(Name = "PART_IndicatorOuterBottom", Type = typeof(Border))]
+[TemplatePart(Name = "PART_IndicatorOuterLeft", Type = typeof(Border))]
+[TemplatePart(Name = "PART_IndicatorOuterRight", Type = typeof(Border))]
+
+
 public class DockingPaneViewModel : Control
 {
     public static readonly DependencyProperty RootDocumentNodeProperty =
@@ -28,9 +33,12 @@ public class DockingPaneViewModel : Control
      
 
     // XAML側の最外殻パーツを一本釣りするためのプライベートポインタ
-    private Grid? _outerDockingIndicator;
+    private Grid? _indicatorOuter;
     private Border? _outerTop;
     private Border? _outerRight;
+    private Border? _outerBottom;
+    private Border? _outerLeft;
+
 
     static DockingPaneViewModel()
     {
@@ -55,10 +63,34 @@ public class DockingPaneViewModel : Control
         this.PreviewMouseDown += OnPreviewMouseDown;
 
     }
+    public override void OnApplyTemplate()
+    {
+        base.OnApplyTemplate();
+
+
+        var _r = GetTemplateChild("PART_DockingOuterIndicator") as Grid;
+
+        // XAMLからアウタードッキング用のパーツアドレスをガチッと補獲
+        _indicatorOuter = GetTemplateChild("PART_IndicatorOuter") as Grid;
+
+         
+
+        _outerTop = GetTemplateChild("PART_IndicatorOuterTop") as Border;
+
+        _outerBottom  = GetTemplateChild("PART_IndicatorOuterBottom") as Border;
+
+        _outerLeft = GetTemplateChild("PART_IndicatorOuterLeft") as Border;
+        _outerRight = GetTemplateChild("PART_IndicatorOuterRight") as Border;
+
+        _outerRight.Drop += OnOuterDrop;
+
+    }
 
     private void OnPreviewMouseDown(object sender, MouseEventArgs  e)
     {
-     //   if (this.RightToolPane == null || this.RightToolPane.IsPopupOpened == false) return;
+        //   if (this.RightToolPane == null || this.RightToolPane.IsPopupOpened == false) return;
+
+
 
         // 🌟【大核心】：クリックされた最末尾の具象要素（TextBlock等）を正確に一本釣り！
         if (e.OriginalSource is System.Windows.DependencyObject clickedElement)
@@ -92,29 +124,18 @@ public class DockingPaneViewModel : Control
    
 
 
-    public override void OnApplyTemplate()
-    {
-        base.OnApplyTemplate();
-
-        // XAMLからアウタードッキング用のパーツアドレスをガチッと補獲
-        _outerDockingIndicator = GetTemplateChild("PART_OuterDockingIndicator") as Grid;
-        _outerTop = GetTemplateChild("PART_OuterTop") as Border;
-        _outerRight = GetTemplateChild("PART_OuterRight") as Border;
-    }
 
     // =========================================================================
     // 🎯 最外殻アウターインジケーター（青線・赤線用）のリアルタイム表示制御
     // =========================================================================
     private void OnOuterDragEnter(object sender, DragEventArgs e)
     {
+        _indicatorOuter.Visibility = Visibility.Visible;
+
         if (e.Data.GetDataPresent(typeof(TokiDragDropPayload)))
         {
-            if (_outerDockingIndicator != null)
-            {
-                // ドラッグ中、ウィンドウ内にマウスがいる間は、
-                // セパレーターの真上に美しい半透明青の「横断ガイドバー」を常時パッと出現させてホールド！
-                _outerDockingIndicator.Visibility = Visibility.Visible;
-            }
+
+     
         }
     }
 
@@ -147,11 +168,9 @@ public class DockingPaneViewModel : Control
 
     private void OnOuterDragLeave(object sender, DragEventArgs e)
     {
-        // マウスがウィンドウの完全に外へエスケープしたか、ドロップを諦めたら即座に成仏消滅
-        if (_outerDockingIndicator != null && !this.IsMouseOver)
-        {
-            _outerDockingIndicator.Visibility = Visibility.Collapsed;
-        }
+
+        _indicatorOuter.Visibility = Visibility.Collapsed;
+
     }
 
     /// <summary>
@@ -167,11 +186,32 @@ public class DockingPaneViewModel : Control
     {
         if (!(e.Data.GetData(typeof(TokiDragDropPayload)) is TokiDragDropPayload payload)) return;
 
+        _indicatorOuter.Visibility = Visibility.Collapsed;
+
+    //    var ctrl = _outerTop.InputHitTest();
+
         IPaneNode sourceNode = payload.SourceNode;
         TabViewModel  draggedData = payload.DraggedData;
 
+        Point dropPos = e.GetPosition(this); // インジケータ全体の Grid を基準にした座標
+        IInputElement hitElement = this.InputHitTest(dropPos);
+
+        bool isTopHit = false;
+        bool isBottomHit = false;
+        bool isLeftHit = false;
+        bool isRightHit = false;
+
+        if (dropPos.Y >= 0 && dropPos.Y <= 24)
+        {
+            isTopHit = true;
+        }
+        // B. 右端バー：X座標が「全体の横幅 - 24ピクセル」から「全体の横幅」の範囲内
+        else if (dropPos.X >= (this.ActualWidth - 24) && dropPos.X <= this.ActualWidth)
+        {
+            isRightHit = true;
+        }
         // マウスが落とされたインジケーターの境界判定
-        if (_outerTop != null && _outerTop.IsMouseOver)
+        if (isTopHit)
         {
             // A. 【青線の場所（アウター上）への着地】
             if (sourceNode != null && sourceNode.TabViewModels != null)
@@ -187,25 +227,37 @@ public class DockingPaneViewModel : Control
                 RootDocumentNode.OuterSplitHorizontal(draggedData);
             }
         }
-        else if (_outerRight != null && _outerRight.IsMouseOver)
+        else if (isRightHit)
         {
             // B. 【赤線の場所（アウター右）への着地】
-            if (sourceNode != null && sourceNode.TabViewModels != null)
-            {
-                int dragIndex = sourceNode.TabViewModels.IndexOf(draggedData);
-                if (dragIndex >= 0) sourceNode.RemoveTab(dragIndex);
-            }
+            int dragIndex = sourceNode.TabViewModels.IndexOf(draggedData);
 
-            if (RootDocumentNode != null)
-            {
-                RootDocumentNode.OuterSplitVertical(draggedData);
-            }
-        }
+            var dropPain = sourceNode.TabViewModels[dragIndex];
 
-        // 役目を終えたアウターインジケーターを強制非表示化
-        if (_outerDockingIndicator != null)
-        {
-            _outerDockingIndicator.Visibility = Visibility.Collapsed;
+
+            if (dragIndex >= 0) sourceNode.RemoveTab(dragIndex);
+
+            var newToolLeaf = new PaneContentNode(dropPain, isToolPane: true);
+            newToolLeaf.CanAutoHide = true; // AutoHiddenの資格を付与
+            newToolLeaf.IsToolPane = true;
+
+            var _sub = RootDocumentNode;
+
+            var newNode = new PaneContentNode(isToolPane: false);
+            newNode.Orientation = EnumOrientation.Vertical; // 左右分割
+
+            newNode.MainChild = _sub;
+            if (_sub != null) _sub.Parent = newNode; // 古い子ノードの親を newNode に上書き
+
+            newNode.SubChild = newToolLeaf;
+            newToolLeaf.Parent = newNode; // ツールペインの親を newNode に指定
+
+            RootDocumentNode = newNode;
+
+//            newNode.Parent = RootDocumentNode;
+
+            this.RootDocumentNode?.RaisePropertyChanged(string.Empty);
+
         }
 
         e.Handled = true;
