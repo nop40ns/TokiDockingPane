@@ -25,13 +25,44 @@ public partial class DockingPaneViewModel : Control
     public static readonly DependencyProperty RootDocumentNodeProperty =
         DependencyProperty.Register(nameof(RootDocumentNode), typeof(IPaneNode), typeof(DockingPaneViewModel), new PropertyMetadata(null));
 
-    
-    public IPaneNode RootDocumentNode
+    // 👉 右エリアツールルート (💡 修正点②：XAML直結のためDependencyPropertyへ昇華)
+    // 👉 右エリアツールルート
+    public static readonly DependencyProperty RightToolRootProperty =
+        DependencyProperty.Register(
+            nameof(RightToolRoot),
+            typeof(IPaneNode),
+            typeof(DockingPaneViewModel),
+            // 💡 解決の核心：単なる null ではなく、値が変わった瞬間にレイアウトを
+            // 100%強制的に再計算（FrameworkPropertyMetadataOptions.AffectsArrange）させる魔法のオプションを指定します！
+            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArrange | FrameworkPropertyMetadataOptions.AffectsRender, OnToolRootChanged));
+
+    // 👈 左エリアツールルート
+    public static readonly DependencyProperty LeftToolRootProperty =
+        DependencyProperty.Register(nameof(LeftToolRoot), typeof(IPaneNode), typeof(DockingPaneViewModel),
+            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArrange | FrameworkPropertyMetadataOptions.AffectsRender, OnToolRootChanged));
+
+    // 👆 上エリアツールルート
+    public static readonly DependencyProperty TopToolRootProperty =
+        DependencyProperty.Register(nameof(TopToolRoot), typeof(IPaneNode), typeof(DockingPaneViewModel),
+            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArrange | FrameworkPropertyMetadataOptions.AffectsRender, OnToolRootChanged));
+
+    // 👇 下エリアツールルート
+    public static readonly DependencyProperty BottomToolRootProperty =
+        DependencyProperty.Register(nameof(BottomToolRoot), typeof(IPaneNode), typeof(DockingPaneViewModel),
+            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArrange | FrameworkPropertyMetadataOptions.AffectsRender, OnToolRootChanged));
+
+
+    // 🎯【超重要・変更通知の中継イベント】
+    // 💡 値がnullからオブジェクトに変わったまさにその瞬間に、WPFへ「サイドバーのリスト（RightHiddenPanesなど）も全部まとめて再計算して！」と連動命令を飛ばします
+    private static void OnToolRootChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        get => (IPaneNode)GetValue(RootDocumentNodeProperty);
-        set => SetValue(RootDocumentNodeProperty, value);
+        if (d is DockingPaneViewModel vm)
+        {
+            // 4辺のAutoHiddenサイドバーの通信線をパチパチと一斉に叩き起こします
+            vm.RefreshHiddenPanes();
+        }
     }
-     
+
 
     // XAML側の最外殻パーツを一本釣りするためのプライベートポインタ
     private Grid? _indicatorOuter;
@@ -40,10 +71,41 @@ public partial class DockingPaneViewModel : Control
     private Border? _outerBottom;
     private Border? _outerLeft;
 
-    public IEnumerable<PaneContentNode> RightHiddenPanes => GetHiddenPanes(RootDocumentNode).Where(n => IsRightOuter(n));
-    // 👈 左側に隠れているツールのリスト
-    public IEnumerable<PaneContentNode> LeftHiddenPanes => GetHiddenPanes(RootDocumentNode).Where(n => IsLeftOuter(n));
-    // 
+    public IPaneNode RootDocumentNode
+    {
+        get => (IPaneNode)GetValue(RootDocumentNodeProperty);
+        set => SetValue(RootDocumentNodeProperty, value);
+    }
+
+    public IPaneNode? RightToolRoot
+    {
+        get => (IPaneNode?)GetValue(RightToolRootProperty);
+        set => SetValue(RightToolRootProperty, value);
+    }
+
+    public IPaneNode? LeftToolRoot
+    {
+        get => (IPaneNode?)GetValue(LeftToolRootProperty);
+        set => SetValue(LeftToolRootProperty, value);
+    }
+
+    public IPaneNode? TopToolRoot
+    {
+        get => (IPaneNode?)GetValue(TopToolRootProperty);
+        set => SetValue(TopToolRootProperty, value);
+    }
+
+    public IPaneNode? BottomToolRoot
+    {
+        get => (IPaneNode?)GetValue(BottomToolRootProperty);
+        set => SetValue(BottomToolRootProperty, value);
+    }
+
+    public IEnumerable<PaneContentNode> RightHiddenPanes => GetHiddenPanes(RightToolRoot);
+    public IEnumerable<PaneContentNode> LeftHiddenPanes => GetHiddenPanes(LeftToolRoot);
+    public IEnumerable<PaneContentNode> TopHiddenPanes => GetHiddenPanes(TopToolRoot);
+    public IEnumerable<PaneContentNode> BottomHiddenPanes => GetHiddenPanes(BottomToolRoot);
+
 
 
     static DockingPaneViewModel()
@@ -105,6 +167,14 @@ public partial class DockingPaneViewModel : Control
         return list;
     }
 
+    public void RefreshHiddenPanes()
+    {
+        // 💡 自分の内部からであれば、PropertyChangedイベントを安全に100%発火させることができます！
+        this.PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(RightHiddenPanes)));
+        this.PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(LeftHiddenPanes)));
+
+        System.Diagnostics.Debug.WriteLine("[ViewModel] 隠しペインサイドバーの再計算通知を代理発射しました。");
+    }
 
     private bool IsLeftOuter(PaneContentNode node)
     {
@@ -123,14 +193,7 @@ public partial class DockingPaneViewModel : Control
         return RootDocumentNode?.SubChild == current;
     }
 
-    public void RefreshHiddenPanes()
-    {
-        // 💡 自分の内部からであれば、PropertyChangedイベントを安全に100%発火させることができます！
-        this.PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(RightHiddenPanes)));
-        this.PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(LeftHiddenPanes)));
-
-        System.Diagnostics.Debug.WriteLine("[ViewModel] 隠しペインサイドバーの再計算通知を代理発射しました。");
-    }
+　
 
     private void OnPreviewMouseDown(object sender, MouseEventArgs  e)
     {

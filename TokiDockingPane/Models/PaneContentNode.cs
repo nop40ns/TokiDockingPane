@@ -61,11 +61,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
         System.Diagnostics.Debug.WriteLine($"[AutoHidden] ノード単体制御: IsPinned={this.IsPinned}, IsAutoHidden={this.IsAutoHidden}");
 
-        if (parameter is ViewModels.DockingPaneViewModel mainVM)
-        {
-            mainVM.RefreshHiddenPanes();
-
-        }
+　
 
 
         // 🌲 ツリーの真の最上位（Root）まで一気に遡る

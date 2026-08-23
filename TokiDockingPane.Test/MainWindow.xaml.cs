@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -72,21 +73,25 @@ public partial class MainWindow : Window
         solutionExplorerNode.SubChild = t2;
 
         t1.Parent = solutionExplorerNode;
-        t2.Parent = solutionExplorerNode;
-
-        // 🚀 4. 【ここが案Aのキモ！】「中央領域全体」と「右ツール」を Vertical（縦割り）で結合し、真の最上位ルートを作る
-        var trueRoot = new PaneContentNode(isToolPane: false) { Orientation = EnumOrientation.Vertical };
-
-        // 左側（Main）に中央のエディタ領域すべてをぶら下げる
-        trueRoot.MainChild = rootDocument;
-        rootDocument.Parent = trueRoot;
-
-        // 右側（Sub）にソリューションエクスプローラー（ツール）をぶら下げる
-        trueRoot.SubChild = solutionExplorerNode;
-        solutionExplorerNode.Parent = trueRoot;
+        t2.Parent = solutionExplorerNode;  
 
         // 🎯 5. 頂点ノードだけを ViewModel に渡して DataContext に直結
-        var mainVM = new DockingPaneViewModel(trueRoot);
+        var mainVM = new DockingPaneViewModel(rootDocument) 
+        {
+            RightToolRoot = solutionExplorerNode
+        };
+
+
+
+
+
+        Debug.WriteLine($"mainVM.RootDocumentNode:{mainVM.RootDocumentNode}");
+        Debug.WriteLine($"mainVM.TopToolRoot:{mainVM.TopToolRoot}");
+        Debug.WriteLine($"mainVM.BottomToolRoot:{mainVM.BottomToolRoot}");
+        Debug.WriteLine($"mainVM.LeftToolRoot:{mainVM.LeftToolRoot}");
+        Debug.WriteLine($"mainVM.RightToolRoot:{mainVM.RightToolRoot}");
+
+
         this.DataContext = mainVM;
     }
     　
