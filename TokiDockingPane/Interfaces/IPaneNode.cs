@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TokiDockingPane.Models;
+using TokiDockingPane.ViewModels;
 
 namespace TokiDockingPane.Interfaces;
 
@@ -43,13 +44,33 @@ public enum EnumOrientation : byte
     Horizontal = 1  // 横割（上下にペインが並ぶ）
 }
 
+
+public enum EnumToolPainPosition:byte
+{
+    None = 0,
+    Top = 1,
+    Bottom = 2,
+    Left = 3,
+    Right=4
+
+
+}
 public interface IPaneNode : IDisposable, INotifyPropertyChanged
 {
     // 親への参照（メインもツールも、ツリーを遡るために必須）
     public IPaneNode? MainChild { get; set; }
     public IPaneNode? SubChild { get; set; }
     public IPaneNode? Parent { get; set; }
+
+
+    public DockingPaneViewModel RootVM { get; set; }
+
+    public string Title { get; set; }
+
+
     public bool IsToolPane { get; set; }
+
+    EnumToolPainPosition ToolPainPosition { get; set; } 
 
     public bool IsAutoHidden { get; set; }
 
@@ -73,9 +94,14 @@ public interface IPaneNode : IDisposable, INotifyPropertyChanged
     public TabViewModel? SelectedTab { get; }
 
 
+     void AddNode(IPaneNode node);
+
     public void AddTab(TabViewModel tab);
     // タブを引き抜く（Remove）ための共通駆動
     void RemoveTab(int index);
+
+    void RemoveMe();
+
 
     void RaisePropertyChanged(string propertyName);
 

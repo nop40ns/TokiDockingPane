@@ -31,6 +31,9 @@
     <!-- これにより、WPFは Generic.xaml 内部の「5列のVS風設計図（Style）」を一瞬で100%確定解決し、即時ロードします！ -->
     <Grid>
         <viewModels:DockingPaneViewModel 
-            RootDocumentNode="{Binding RootDocumentNode}"   />
+            RootDocumentNode="{Binding RootDocumentNode}"  
+            RightToolRoot ="{Binding RightToolRoot}"
+            BottomToolRoot="{Binding BottomToolRoot}"
+            />
     </Grid>
 </Window>

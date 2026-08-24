@@ -34,10 +34,12 @@ public partial class MainWindow : Window
 
         string[] l =  {
             "C:\\xxx",
-            "C:\\yyy", 
+            "C:\\yyy",
+            "C:\\zzz",
         };
         // 🔷 1. 中央領域（エディタ）の末端ペインたちを生成 (isToolPane: false)
-        var node左上 = new PaneContentNode(new TabViewModel(s[0], new FileViewModel(s[0])), isToolPane: false);
+        var node左上 
+            = new PaneContentNode(new TabViewModel(s[0], new FileViewModel(s[0])), isToolPane: false);
         node左上.AddTab(new TabViewModel(s[1], new FileViewModel(s[1])));
 
         var node右上 = new PaneContentNode(new TabViewModel(s[2], new FileViewModel(s[2])), isToolPane: false);
@@ -50,49 +52,52 @@ public partial class MainWindow : Window
 
         // 🌲 2. 中央領域の結合（ここは既存のトポロジーと同じ）
         var nodeTop = new PaneContentNode(isToolPane: false) { Orientation = EnumOrientation.Vertical };
-        nodeTop.MainChild = node左上; node左上.Parent = nodeTop;
-        nodeTop.SubChild = node右上; node右上.Parent = nodeTop;
+
+
+        nodeTop.ID = "nodeTop";
+        node左上.ID = "node左上";
+
+        nodeTop.MainChild = node左上;  
+        nodeTop.SubChild = node右上;  
 
         var nodeBottom = new PaneContentNode(isToolPane: false) { Orientation = EnumOrientation.Vertical };
-        nodeBottom.MainChild = node左下; node左下.Parent = nodeBottom;
-        nodeBottom.SubChild = node右下; node右下.Parent = nodeBottom;
+        nodeBottom.MainChild = node左下;  
+        nodeBottom.SubChild = node右下;  
 
         var rootDocument = new PaneContentNode(isToolPane: false) { Orientation = EnumOrientation.Horizontal };
-        rootDocument.MainChild = nodeTop; nodeTop.Parent = rootDocument;
-        rootDocument.SubChild = nodeBottom; nodeBottom.Parent = rootDocument;
+        rootDocument.MainChild = nodeTop;  
+        rootDocument.SubChild = nodeBottom;  
 
 
 
-        var t1 = new PaneContentNode(new TabViewModel(l[0], new LuncherViewModelWPF(l[0])), isToolPane: true);
-        var t2 = new PaneContentNode(new TabViewModel(l[1], new LuncherViewModelWPF(l[1])), isToolPane: true);
+        var t0 = new PaneContentNode(new TabViewModel(l[0], new LuncherViewModelWPF(l[0])), isToolPane: true);
+        var t1 = new PaneContentNode(new TabViewModel(l[1], new LuncherViewModelWPF(l[1])), isToolPane: true);
+        var t2 = new PaneContentNode(new TabViewModel(l[2], new LuncherViewModelWPF(l[2])), isToolPane: true);
 
         // 🔷 3. 右端のツール領域の末端ペインを生成 (isToolPane: true)
         var solutionExplorerNode = new PaneContentNode() { Orientation = EnumOrientation.Horizontal };
+        solutionExplorerNode.IsToolPane = true;
 
-        solutionExplorerNode.MainChild = t1;
-        solutionExplorerNode.SubChild = t2;
+        solutionExplorerNode.ID = "solutionExplorerNode";
+        t0.ID = "t0";
+        t1.ID = "t1";
 
-        t1.Parent = solutionExplorerNode;
-        t2.Parent = solutionExplorerNode;  
+        solutionExplorerNode.MainChild = t0;
+        solutionExplorerNode.SubChild = t1;
+         
 
         // 🎯 5. 頂点ノードだけを ViewModel に渡して DataContext に直結
-        var mainVM = new DockingPaneViewModel(rootDocument) 
-        {
-            RightToolRoot = solutionExplorerNode
-        };
+        var mainVM = new DockingPaneViewModel(rootDocument );
+        mainVM.RightToolRoot = solutionExplorerNode;
+        mainVM.RightToolRoot.ToolPainPosition = EnumToolPainPosition.Right;
 
 
-
-
-
-        Debug.WriteLine($"mainVM.RootDocumentNode:{mainVM.RootDocumentNode}");
-        Debug.WriteLine($"mainVM.TopToolRoot:{mainVM.TopToolRoot}");
-        Debug.WriteLine($"mainVM.BottomToolRoot:{mainVM.BottomToolRoot}");
-        Debug.WriteLine($"mainVM.LeftToolRoot:{mainVM.LeftToolRoot}");
-        Debug.WriteLine($"mainVM.RightToolRoot:{mainVM.RightToolRoot}");
-
+        mainVM.BottomToolRoot = t2;
+        
+         
 
         this.DataContext = mainVM;
+
     }
     　
 }

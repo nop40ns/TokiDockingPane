@@ -4,6 +4,8 @@
     xmlns:conv="clr-namespace:TokiDockingPane.Converters"
     xmlns:local="clr-namespace:TokiDockingPane"
     xmlns:models="clr-namespace:TokiDockingPane.Models"
+    xmlns:uc="clr-namespace:TokiDockingPane.UserControls"
+    xmlns:sysDiag="clr-namespace:System.Diagnostics;assembly=WindowsBase"
     xmlns:viewModels="clr-namespace:TokiDockingPane.ViewModels">
 
     <conv:DoubleToGridLengthConverter x:Key="DoubleToGridLengthConverter" />
@@ -18,129 +20,168 @@
                 <ControlTemplate TargetType="{x:Type viewModels:DockingPaneViewModel}">
                     <Grid>
                         <Grid.RowDefinitions>
+                            <!--  0: 上端サイドバー  -->
                             <RowDefinition Height="auto" />
-                            <RowDefinition Height="200" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="200" />
+
+                            <!--  1: 上常設ツール  -->
+                            <RowDefinition
+                                x:Name="Row_TopTool"
+                                Height="*"
+                                MinHeight="0" />
+                            <!--  2: 上セパレータ用通路  -->
+                            <RowDefinition Height="12" />
+
+                            <!--  3: ★中央メイン領域  -->
+                            <RowDefinition Height="*" MinHeight="200" />
+
+                            <!--  4: 下セパレータ用通路  -->
+                            <RowDefinition Height="12" />
+
+                            <!--  5: 下常設ツール  -->
+                            <RowDefinition
+                                x:Name="Row_BottomTool"
+                                Height="*"
+                                MinHeight="0" />
+
+                            <!--  6: 右端サイドバー  -->
                             <RowDefinition Height="auto" />
                         </Grid.RowDefinitions>
 
 
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto" />
-                            <ColumnDefinition Width="200" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="auto" />
+                            <!--  0: 左端サイドバー  -->
+                            <ColumnDefinition Width="Auto" />
+
+                            <!--  1: 👈左常設ツール  -->
+                            <ColumnDefinition
+                                x:Name="Col_LeftTool"
+                                Width="*"
+                                MinWidth="0" />
+
+                            <!--  2: 左セパレータ用通路  -->
+                            <ColumnDefinition Width="12" />
+
+                            <!--  3: ★中央メイン領域  -->
+                            <ColumnDefinition Width="*" MinWidth="200" />
+
+                            <!--  4: 右セパレータ用通路  -->
+                            <ColumnDefinition Width="12" />
+
+                            <!--  5: 👉右常設ツール  -->
+                            <ColumnDefinition
+                                x:Name="Col_RightTool"
+                                Width="*"
+                                MinWidth="0" />
+
+                            <!--  6: 右端サイドバー  -->
+                            <ColumnDefinition Width="Auto" />
+
                         </Grid.ColumnDefinitions>
 
+
+
+
+                        <!--  📦 列2：中央メイン領域（4画面自由分割ツリー）  -->
+                        <ContentPresenter
+                            x:Name="PART_MainContent"
+                            Grid.Row="3"
+                            Grid.Column="3"
+                            Content="{Binding RootDocumentNode, RelativeSource={RelativeSource TemplatedParent}}" />
+
                         <Grid
-                            Grid.Row="2"
-                            Grid.Column="2"
-                            Background="#FF1E1E1E">
+                            x:Name="PART_IndicatorOuter"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Panel.ZIndex="9999"
+                            Background="Transparent"
+                            IsHitTestVisible="False"
+                            Visibility="Collapsed">
 
 
-                            <!--  📦 列2：中央メイン領域（4画面自由分割ツリー）  -->
-                            <ContentPresenter
-                                x:Name="PART_MainContent"
-                                Grid.Column="2"
-                                Content="{Binding RootDocumentNode, RelativeSource={RelativeSource TemplatedParent}}" />
-
-                            <Grid
-                                x:Name="PART_IndicatorOuter"
-                                HorizontalAlignment="Stretch"
-                                VerticalAlignment="Stretch"
-                                Panel.ZIndex="9999"
-                                Background="Transparent"
-                                IsHitTestVisible="False"
-                                Visibility="Collapsed">
-
-
-                                <Border
-                                    x:Name="PART_IndicatorOuterTop"
-                                    Width="24"
-                                    Height="24"
-                                    Margin="0,4,0,0"
+                            <Border
+                                x:Name="PART_IndicatorOuterTop"
+                                Width="24"
+                                Height="24"
+                                Margin="0,4,0,0"
+                                VerticalAlignment="Top"
+                                AllowDrop="True"
+                                Background="#FF2D2D30"
+                                BorderBrush="#FF007ACC"
+                                BorderThickness="1"
+                                CornerRadius="2">
+                                <Rectangle
+                                    Width="14"
+                                    Height="6"
+                                    Margin="0,3,0,0"
                                     VerticalAlignment="Top"
-                                    AllowDrop="True"
-                                    Background="#FF2D2D30"
-                                    BorderBrush="#FF007ACC"
-                                    BorderThickness="1"
-                                    CornerRadius="2">
-                                    <Rectangle
-                                        Width="14"
-                                        Height="6"
-                                        Margin="0,3,0,0"
-                                        VerticalAlignment="Top"
-                                        Fill="#FF007ACC" />
-                                </Border>
-                                <Border
-                                    x:Name="PART_IndicatorOuterBottom"
-                                    Width="24"
-                                    Height="24"
-                                    Margin="0,0,0,4"
+                                    Fill="#FF007ACC" />
+                            </Border>
+                            <Border
+                                x:Name="PART_IndicatorOuterBottom"
+                                Width="24"
+                                Height="24"
+                                Margin="0,0,0,4"
+                                VerticalAlignment="Bottom"
+                                AllowDrop="True"
+                                Background="#FF2D2D30"
+                                BorderBrush="#FF007ACC"
+                                BorderThickness="1"
+                                CornerRadius="2">
+                                <Rectangle
+                                    Width="14"
+                                    Height="6"
+                                    Margin="0,0,0,3"
                                     VerticalAlignment="Bottom"
-                                    AllowDrop="True"
-                                    Background="#FF2D2D30"
-                                    BorderBrush="#FF007ACC"
-                                    BorderThickness="1"
-                                    CornerRadius="2">
-                                    <Rectangle
-                                        Width="14"
-                                        Height="6"
-                                        Margin="0,0,0,3"
-                                        VerticalAlignment="Bottom"
-                                        Fill="#FF007ACC" />
-                                </Border>
-                                <Border
-                                    x:Name="PART_IndicatorOuterLeft"
-                                    Width="24"
-                                    Height="24"
-                                    Margin="4,0,0,0"
+                                    Fill="#FF007ACC" />
+                            </Border>
+                            <Border
+                                x:Name="PART_IndicatorOuterLeft"
+                                Width="24"
+                                Height="24"
+                                Margin="4,0,0,0"
+                                HorizontalAlignment="Left"
+                                AllowDrop="True"
+                                Background="#FF2D2D30"
+                                BorderBrush="#FF007ACC"
+                                BorderThickness="1"
+                                CornerRadius="2">
+                                <Rectangle
+                                    Width="6"
+                                    Height="14"
+                                    Margin="3,0,0,0"
                                     HorizontalAlignment="Left"
-                                    AllowDrop="True"
-                                    Background="#FF2D2D30"
-                                    BorderBrush="#FF007ACC"
-                                    BorderThickness="1"
-                                    CornerRadius="2">
-                                    <Rectangle
-                                        Width="6"
-                                        Height="14"
-                                        Margin="3,0,0,0"
-                                        HorizontalAlignment="Left"
-                                        Fill="#FF007ACC" />
-                                </Border>
-                                <Border
-                                    x:Name="PART_IndicatorOuterRight"
-                                    Width="24"
-                                    Height="24"
-                                    Margin="0,0,4,0"
+                                    Fill="#FF007ACC" />
+                            </Border>
+                            <Border
+                                x:Name="PART_IndicatorOuterRight"
+                                Width="24"
+                                Height="24"
+                                Margin="0,0,4,0"
+                                HorizontalAlignment="Right"
+                                AllowDrop="True"
+                                Background="#FF2D2D30"
+                                BorderBrush="#FF007ACC"
+                                BorderThickness="1"
+                                CornerRadius="2"
+                                IsHitTestVisible="True">
+
+                                <Rectangle
+                                    Width="6"
+                                    Height="14"
+                                    Margin="0,0,3,0"
                                     HorizontalAlignment="Right"
-                                    AllowDrop="True"
-                                    Background="#FF2D2D30"
-                                    BorderBrush="#FF007ACC"
-                                    BorderThickness="1"
-                                    CornerRadius="2"
-                                    IsHitTestVisible="True">
-
-                                    <Rectangle
-                                        Width="6"
-                                        Height="14"
-                                        Margin="0,0,3,0"
-                                        HorizontalAlignment="Right"
-                                        Fill="#FF007ACC" />
-                                </Border>
-                            </Grid>
-
-
+                                    Fill="#FF007ACC" />
+                            </Border>
                         </Grid>
+
+
 
 
                         <!--  👈 左常設エリア  -->
                         <ContentPresenter
                             x:Name="PART_LeftContent"
-                            Grid.Row="1"
-                            Grid.RowSpan="3"
+                            Grid.Row="3"
+                            Grid.RowSpan="1"
                             Grid.Column="1"
                             Content="{Binding LeftToolRoot, RelativeSource={RelativeSource TemplatedParent}}">
                             <ContentPresenter.Resources>
@@ -165,19 +206,78 @@
                             </ContentPresenter.Style>
                         </ContentPresenter>
 
+
+                        <GridSplitter
+                            x:Name="PART_LeftSplitter"
+                            Grid.Row="3"
+                            Grid.RowSpan="1"
+                            Grid.Column="2"
+                            Width="12"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Background="#FF3E3E42"
+                            Visibility="Visible" />
+
+                        <ItemsControl
+                            Grid.Row="0"
+                            Grid.RowSpan="7"
+                            Grid.Column="0"
+                            Width="Auto"
+                            Panel.ZIndex="10000"
+                            Background="#FF2D2D30"
+                            BorderBrush="#FF3F3F46"
+                            BorderThickness="1,0,0,0"
+                            ItemsSource="{Binding LeftHiddenPanes, RelativeSource={RelativeSource TemplatedParent}}">
+                            <!--  何よりも手前に配置  -->
+
+                            <!--  タブボタンを「上から下」へ縦に並べるパネル  -->
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Margin="0,10,0,0" Orientation="Vertical" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+
+                            <!--  🎯 VSそっくりの「縦書きタブボタン」のデザイン  -->
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border
+                                        x:Name="HiddenTabBorder"
+                                        Margin="0,0,0,5"
+                                        Padding="6,12,6,12"
+                                        Background="Transparent"
+                                        Cursor="Hand">
+                                        <Border.InputBindings>
+                                            <MouseBinding
+                                                Command="{Binding DataContext.ToggleOverlayCommand, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}"
+                                                CommandParameter="{Binding}"
+                                                MouseAction="LeftClick" />
+                                        </Border.InputBindings>
+
+                                        <!--  文字列（タイトル）を時計回りに 90 度回転させて美しい縦書きにします  -->
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            FontSize="12"
+                                            Foreground="#FFDCDCDC"
+                                            Text="{Binding SelectedTab.Title}">
+                                            <TextBlock.LayoutTransform>
+                                                <RotateTransform Angle="90" />
+                                            </TextBlock.LayoutTransform>
+                                        </TextBlock>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+
                         <!--  👉 右常設エリア  -->
-                        <!--
-                            💡 【歴史的大勝利】：
-                            WPFの循環ネストバグを完全にバイパスするため、ライブビジュアルツリーを開いた瞬間、
-                            PART_RightContent の下に本物の DockingPane、そしてあなたが組み立てた t1 と t2 の
-                            2分割されたソリューションエクスプローラー画面が、ついに144Hzで1ミリの隙間もなく大出現します！
-                        -->
                         <ContentPresenter
                             x:Name="PART_RightContent"
-                            Grid.Row="1"
-                            Grid.RowSpan="3"
-                            Grid.Column="3"
-                            Content="{Binding RightToolRoot, RelativeSource={RelativeSource TemplatedParent}}">
+                            Grid.Row="3"
+                            Grid.RowSpan="1"
+                            Grid.Column="5"
+                            Content="{Binding RightToolRoot, RelativeSource={RelativeSource TemplatedParent}}"
+                            Visibility="Visible">
                             <ContentPresenter.Resources>
                                 <DataTemplate DataType="{x:Type models:PaneContentNode}">
                                     <local:DockingPane Content="{Binding}" DataContext="{Binding}" />
@@ -193,6 +293,295 @@
                                 </Style>
                             </ContentPresenter.Style>
                         </ContentPresenter>
+
+
+                        <!-- ⭕ Generic.xaml : 7行×7列Gridの直下（</Grid>の直前）に追記 -->
+
+                        <!--  🌟 右端 AutoHidden 専用サイドバー（タブヘッダー領域）  -->
+                        <!--  💡 隠れているツールが 1 つ以上あるときだけ、画面の本当の右端に自動で出現します  -->
+                        <ItemsControl
+                            x:Name="PART_RightAutoHiddenHedder"
+                            Grid.Row="0"
+                            Grid.RowSpan="7"
+                            Grid.Column="6"
+                            Width="Auto"
+                            Panel.ZIndex="10000"
+                            Background="#FF2D2D30"
+                            BorderBrush="#FF3F3F46"
+                            BorderThickness="1,0,0,0"
+                            ItemsSource="{Binding RightHiddenPanes, RelativeSource={RelativeSource TemplatedParent}}"
+                            Visibility="Visible">
+                            <!--  何よりも手前に配置  -->
+
+                            <!--  タブボタンを「上から下」へ縦に並べるパネル  -->
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Margin="0,10,0,0" Orientation="Vertical" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+
+                            <!--  🎯 VSそっくりの「縦書きタブボタン」のデザイン  -->
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border
+                                        x:Name="HiddenTabBorder"
+                                        Margin="0,0,0,5"
+                                        Padding="6,12,6,12"
+                                        Background="Transparent"
+                                        Cursor="Hand">
+                                        <Border.InputBindings>
+                                            <!--  ポチッとクリックされたら、一時展開用のコマンドを叩く  -->
+                                            <MouseBinding
+                                                Command="{Binding DataContext.ToggleOverlayCommand, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}"
+                                                CommandParameter="{Binding}"
+                                                MouseAction="LeftClick" />
+                                        </Border.InputBindings>
+
+                                        <!--  文字列（タイトル）を時計回りに 90 度回転させて美しい縦書きにします  -->
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            FontSize="12"
+                                            Foreground="#FFDCDCDC"
+                                            Text="{Binding SelectedTab.Title}">
+                                            <TextBlock.LayoutTransform>
+                                                <RotateTransform Angle="90" />
+                                            </TextBlock.LayoutTransform>
+                                        </TextBlock>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+
+                        <GridSplitter
+                            x:Name="PART_RightSplitter"
+                            Grid.Row="3"
+                            Grid.RowSpan="1"
+                            Grid.Column="4"
+                            Width="12"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Background="#FF3E3E42"
+                            Visibility="Visible" />
+
+                        <ContentPresenter x:Name="PART_RightOverlayContent"
+                  Grid.Row="3"
+                  Grid.Column="3"
+                  Grid.ColumnSpan="3"
+                  HorizontalAlignment="Right"
+                  Width="250" 
+                  Panel.ZIndex="50000"
+           Content="{Binding OverlayPaneNode, 
+                           RelativeSource={RelativeSource TemplatedParent}, 
+                           sysDiag:PresentationTraceSources.TraceLevel=High}">
+
+                            <!-- 🎯【大開通の核心】：Resourcesに逃げるのをやめ、ContentTemplateに直接設計図をハンダ付けします！
+            これにより、WPFのライフサイクルロックを完全にすり抜け、
+            クリックした瞬間にライブビジュアルツリーの下に本物の DockingPane が100%確実にぶら下がります！ -->
+                            <ContentPresenter.ContentTemplate>
+                                <DataTemplate DataType="{x:Type models:PaneContentNode}">
+                                    <local:DockingPane Content="{Binding}" DataContext="{Binding}" />
+                                </DataTemplate>
+                            </ContentPresenter.ContentTemplate>
+
+                            <ContentPresenter.Style>
+                                <Style TargetType="ContentPresenter">
+                                    <!-- デフォルト（データがある時）は表示 -->
+                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Style.Triggers>
+                                        <!-- ⚡ 頭脳（OverlayPaneNode）が空（null）の時だけ、ピンポイントで非表示（Collapsed）に叩き落とします -->
+                                        <DataTrigger Binding="{Binding OverlayPaneNode, RelativeSource={RelativeSource TemplatedParent}}" 
+                             Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ContentPresenter.Style>
+                        </ContentPresenter>
+
+
+
+
+
+
+
+
+                        <ContentPresenter
+                            x:Name="PART_TopContent"
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Grid.ColumnSpan="5"
+                            Content="{Binding TopToolRoot, RelativeSource={RelativeSource TemplatedParent}}" />
+
+
+
+
+
+
+                        <GridSplitter
+                            x:Name="PART_TopSplitter"
+                            Grid.Row="2"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="7"
+                            Height="12"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Background="#FF3E3E42"
+                            Visibility="Visible" />
+
+                        <ItemsControl
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="7"
+                            Width="Auto"
+                            Panel.ZIndex="10000"
+                            Background="#FF2D2D30"
+                            BorderBrush="#FF3F3F46"
+                            BorderThickness="1,0,0,0"
+                            ItemsSource="{Binding TopHiddenPanes, RelativeSource={RelativeSource TemplatedParent}}">
+                            <!--  何よりも手前に配置  -->
+
+                            <!--  タブボタンを「上から下」へ縦に並べるパネル  -->
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Margin="0,10,0,0" Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+
+                            <!--  🎯 VSそっくりの「縦書きタブボタン」のデザイン  -->
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border
+                                        x:Name="HiddenTabBorder"
+                                        Margin="0,0,0,5"
+                                        Padding="6,12,6,12"
+                                        Background="Transparent"
+                                        Cursor="Hand">
+                                        <Border.InputBindings>
+                                            <!--  ポチッとクリックされたら、一時展開用のコマンドを叩く  -->
+                                            <MouseBinding
+                                                Command="{Binding DataContext.ToggleOverlayCommand, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}"
+                                                CommandParameter="{Binding}"
+                                                MouseAction="RightClick" />
+                                        </Border.InputBindings>
+
+                                        <!--  文字列（タイトル）を時計回りに 90 度回転させて美しい縦書きにします  -->
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            FontSize="12"
+                                            Foreground="#FFDCDCDC"
+                                            Text="{Binding SelectedTab.Title}" />
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+
+
+
+
+
+
+
+
+                        <GridSplitter
+                            x:Name="PART_BottomSplitter"
+                            Grid.Row="4"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="7"
+                            Height="12"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Background="#FF3E3E42"
+                            Visibility="Visible" />
+
+
+                        <ContentPresenter
+                            x:Name="PART_BottomContent"
+                            Grid.Row="5"
+                            Grid.Column="1"
+                            Grid.ColumnSpan="5"
+                            Content="{Binding BottomToolRoot, RelativeSource={RelativeSource TemplatedParent}}">
+                            <ContentPresenter.Resources>
+                                <DataTemplate DataType="{x:Type models:PaneContentNode}">
+                                    <local:DockingPane Content="{Binding}" DataContext="{Binding}" />
+                                </DataTemplate>
+                            </ContentPresenter.Resources>
+                            <ContentPresenter.Style>
+                                <Style TargetType="ContentPresenter">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding BottomToolRoot, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ContentPresenter.Style>
+                        </ContentPresenter>
+
+                        <ItemsControl
+                            Grid.Row="6"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="7"
+                            Width="Auto"
+                            Panel.ZIndex="10000"
+                            Background="#FF2D2D30"
+                            BorderBrush="#FF3F3F46"
+                            BorderThickness="1,0,0,0"
+                            ItemsSource="{Binding BottomHiddenPanes, RelativeSource={RelativeSource TemplatedParent}}">
+                            <!--  何よりも手前に配置  -->
+
+                            <!--  タブボタンを「上から下」へ縦に並べるパネル  -->
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Margin="0,10,0,0" Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+
+                            <!--  🎯 VSそっくりの「縦書きタブボタン」のデザイン  -->
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid VerticalAlignment="Center">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="20" />
+                                            <RowDefinition Height="80" />
+                                        </Grid.RowDefinitions>
+                                        <Border
+                                            x:Name="HiddenTabBorder"
+                                            Grid.Row="0"
+                                            Margin="0,0,0,5"
+                                            Padding="6,12,6,12"
+                                            Background="Transparent"
+                                            Cursor="Hand">
+
+                                            <Border.InputBindings>
+                                                <!--  ポチッとクリックされたら、一時展開用のコマンドを叩く  -->
+                                                <MouseBinding
+                                                    Command="{Binding DataContext.ToggleOverlayCommand, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}"
+                                                    CommandParameter="{Binding}"
+                                                    MouseAction="RightClick" />
+                                            </Border.InputBindings>
+
+
+                                        </Border>
+
+
+                                        <!--  文字列（タイトル）を時計回りに 90 度回転させて美しい縦書きにします  -->
+                                        <TextBlock
+                                            Grid.Row="1"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            FontSize="12"
+                                            Foreground="#FFDCDCDC"
+                                            Text="{Binding SelectedTab.Title}" />
+
+
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
 
 
 
@@ -267,7 +656,68 @@
 
 
                     </Grid>
+                    <ControlTemplate.Triggers>
 
+                        <!--  =========================================================================  -->
+                        <!--  👉 【右エリア】の自動消滅＆緊縮トリガー  -->
+                        <!--  =========================================================================  -->
+                        <!--  💡 条件1: そもそも右側のデータ（RightToolRoot）が空っぽの時  -->
+                        <DataTrigger Binding="{Binding RightToolRoot}" Value="{x:Null}">
+                            <Setter TargetName="Col_RightTool" Property="Width" Value="0" />
+                            <Setter TargetName="PART_RightSplitter" Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+
+                        <!--  💡 条件2: 画鋲が外されて、右エリアのツールペインが「自動隠蔽（AutoHidden）」状態になった時  -->
+                        <!--
+                            🎯【これぞ本物のVS風挙動！】：
+                            データは裏側に残したまま、右の列幅を「0」にしてセパレータもCollapsedに追い込みます。
+                            これによって黒い隙間が1ミリも残らず、中央のエディタが画面右端までググッと全自動で広がります！
+                        -->
+                        <DataTrigger Binding="{Binding RightToolRoot.IsAutoHidden}" Value="True">
+                            <Setter TargetName="Col_RightTool" Property="Width" Value="0" />
+                            <Setter TargetName="PART_RightSplitter" Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+
+
+                        <!--  =========================================================================  -->
+                        <!--  👈 【左エリア】の自動消滅＆緊縮トリガー  -->
+                        <!--  =========================================================================  -->
+                        <DataTrigger Binding="{Binding LeftToolRoot}" Value="{x:Null}">
+                            <Setter TargetName="Col_LeftTool" Property="Width" Value="0" />
+                            <Setter TargetName="PART_LeftSplitter" Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding LeftToolRoot.IsAutoHidden}" Value="True">
+                            <Setter TargetName="Col_LeftTool" Property="Width" Value="0" />
+                            <Setter TargetName="PART_LeftSplitter" Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+
+
+                        <!--  =========================================================================  -->
+                        <!--  👆 【上エリア】の自動消滅＆緊縮トリガー  -->
+                        <!--  =========================================================================  -->
+                        <DataTrigger Binding="{Binding TopToolRoot}" Value="{x:Null}">
+                            <Setter TargetName="Row_TopTool" Property="Height" Value="0" />
+                            <Setter TargetName="PART_TopSplitter" Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding TopToolRoot.IsAutoHidden}" Value="True">
+                            <Setter TargetName="Row_TopTool" Property="Height" Value="0" />
+                            <Setter TargetName="PART_TopSplitter" Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+
+
+                        <!--  =========================================================================  -->
+                        <!--  👇 【下エリア】の自動消滅＆緊縮トリガー  -->
+                        <!--  =========================================================================  -->
+                        <DataTrigger Binding="{Binding BottomToolRoot}" Value="{x:Null}">
+                            <Setter TargetName="Row_BottomTool" Property="Height" Value="0" />
+                            <Setter TargetName="PART_BottomSplitter" Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding BottomToolRoot.IsAutoHidden}" Value="True">
+                            <Setter TargetName="Row_BottomTool" Property="Height" Value="0" />
+                            <Setter TargetName="PART_BottomSplitter" Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+
+                    </ControlTemplate.Triggers>
 
                 </ControlTemplate>
             </Setter.Value>
@@ -391,56 +841,15 @@
                                                         </Button.Template>
                                                     </Button>
 
-                                                    <Button
-                                                        x:Name="PART_PinButton"
+
+                                                    <uc:PinButton
                                                         Grid.Column="2"
-                                                        Width="16"
-                                                        Height="16"
-                                                        Margin="0,0,5,0"
-                                                        Background="Transparent"
-                                                        BorderThickness="0"
                                                         Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType={x:Type local:DockingPane}}}"
                                                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}"
-                                                        ToolTip="自動的に隠す"
-                                                        Visibility="Visible">
-                                                        <!--  💡 引数として現在のタブ（TabViewModel）を念のため渡しておきます  -->
-                                                        >
-                                                        <Button.Template>
-                                                            <ControlTemplate TargetType="Button">
-                                                                <!--  💡 解決の核心：まずは Grid や Border などのビジュアル（実体）を先に全て定義します  -->
-                                                                <Border Background="Transparent">
-                                                                    <Path
-                                                                        x:Name="PinPath"
-                                                                        Data="M8,2 L8,7 M5,4 L11,4 M5,7 L11,7 M6,7 L6,11 L8,14 L10,11 L10,7"
-                                                                        RenderTransformOrigin="0.5,0.5"
-                                                                        Stroke="#FF999999"
-                                                                        StrokeThickness="1.2">
-                                                                        <Path.RenderTransform>
-                                                                            <RotateTransform x:Name="PinRotation" Angle="0" />
+                                                        IsPinned="{Binding DataContext.IsPinned, RelativeSource={RelativeSource AncestorType={x:Type local:DockingPane}}}" />
 
 
 
-                                                                        </Path.RenderTransform>
-                                                                        <Path.Style>
-                                                                            <Style TargetType="Path">
-                                                                                <Style.Triggers>
-                                                                                    <DataTrigger Binding="{Binding DataContext.IsAutoHidden, RelativeSource={RelativeSource AncestorType={x:Type local:DockingPane}}}" Value="True">
-                                                                                        <Setter Property="RenderTransform">
-                                                                                            <Setter.Value>
-                                                                                                <!--  ⚡ ターゲット名を使わずに、トランスフォームごと-90度に差し替えます！  -->
-                                                                                                <RotateTransform Angle="-90" />
-                                                                                            </Setter.Value>
-                                                                                        </Setter>
-                                                                                    </DataTrigger>
-                                                                                </Style.Triggers>
-                                                                            </Style>
-                                                                        </Path.Style>
-                                                                    </Path>
-                                                                </Border>
-
-                                                            </ControlTemplate>
-                                                        </Button.Template>
-                                                    </Button>
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
@@ -675,6 +1084,10 @@
 
                             </MultiDataTrigger.Setters>
                         </MultiDataTrigger>
+
+
+
+
 
 
                     </ControlTemplate.Triggers>

@@ -1,7 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using TokiDockingPane.Interfaces;
+using TokiDockingPane.ViewModels;
 
 namespace TokiDockingPane.Models;
 
@@ -13,6 +15,9 @@ namespace TokiDockingPane.Models;
 
 public partial class PaneContentNode :ObservableObject , IPaneNode
 {
+
+    public string ID = "";
+
     [ObservableProperty]
     private IPaneNode? _parent;
 
@@ -21,6 +26,9 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
     [ObservableProperty]
     private IPaneNode? _subChild;  // Verticalなら「右」、Horizontalなら「下」
+
+    public DockingPaneViewModel RootVM { get; set; }
+
 
     [ObservableProperty]
     private EnumOrientation _orientation;
@@ -39,9 +47,14 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
     [ObservableProperty]
     private bool _isToolPane = false;
+    
+    [ObservableProperty]
+    EnumToolPainPosition _toolPainPosition = EnumToolPainPosition.None;
+
+
 
     [ObservableProperty]
-    private bool _isPinned = false;
+    private bool _isPinned = true;
 
     [ObservableProperty]
     private bool _canAutoHide = false;
@@ -50,7 +63,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     [ObservableProperty]
     private bool _isAutoHidden = false;
 
-
+  
 
     [RelayCommand]
     private void TogglePin(object parameter)
@@ -61,24 +74,36 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
         System.Diagnostics.Debug.WriteLine($"[AutoHidden] ノード単体制御: IsPinned={this.IsPinned}, IsAutoHidden={this.IsAutoHidden}");
 
-　
 
+     
+
+        if (parameter is DockingPaneViewModel mainVM)
+        {
+            mainVM.AddHiddenPane(this);
+        }
 
         // 🌲 ツリーの真の最上位（Root）まで一気に遡る
         IPaneNode? root = this;
         while (root?.Parent != null) root = root.Parent;
 
-
+        RemoveMe();
 
 
         // 画面全体の再描画（DataTriggerの即時適用）をWPFへ強烈に通知！
         root?.RaisePropertyChanged(string.Empty);
     }
 
+
+  
+
+
+
     partial void OnSelectedTabIndexChanged(int oldValue, int newValue)
     {
         OnPropertyChanged(nameof(ActiveViewModel));
     }
+
+    
 
 
     // 各タブの実体データ（ViewModelポインタ）を保持するリスト
@@ -117,8 +142,12 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     /// </summary>
 
 
-    public PaneContentNode(TabViewModel tab , bool isToolPane=false)
+    public PaneContentNode(
+        TabViewModel tab , 
+        bool isToolPane=false )
     {
+        
+
         IsToolPane = isToolPane;
 
 
@@ -127,13 +156,19 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
         OnPropertyChanged(nameof(SelectedTabIndex));
         OnPropertyChanged(nameof(ActiveViewModel));
+
+        
     }
 
     /// <summary>
     /// レイアウトコンテナ（親ノード）用コンストラクタ
     /// </summary>
-    public PaneContentNode( bool isToolPane = false )
+    public PaneContentNode( 
+        bool isToolPane = false, 
+        [CallerArgumentExpression("self")] string variableName = ""
+        )
     {
+        ID= variableName;
         IsToolPane = isToolPane;
 
     }
@@ -143,6 +178,30 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         OnPropertyChanged(nameof(ActiveViewModel));
         OnPropertyChanged(nameof(SelectedTab)); // 念のためSelectedTabも同期
     }
+
+
+    partial void OnMainChildChanged(IPaneNode? oldValue, IPaneNode? newValue)
+    {
+        if (newValue == null) return;
+        newValue.Parent = this;
+
+        
+    }
+
+    partial void OnSubChildChanged(IPaneNode? oldValue, IPaneNode? newValue)
+    {
+        if (newValue == null) return;
+        newValue.Parent = this;
+    }
+
+
+    public void AddNode(IPaneNode node)
+    {
+        node.Parent.ViewModel = this;
+
+    }
+
+
 
     /// <summary>
     /// このペインに新しくタブを追加する（1本道非同期パイプラインへの直結用）
@@ -184,9 +243,104 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         OnPropertyChanged(nameof(ActiveViewModel));
     }
 
-    /// <summary>
-    /// タブ引き抜き処理（トポロジーの自動自動クリーンアップ内包）
-    /// </summary>
+
+
+
+    public virtual void RemoveTab(  )
+    {
+
+    }
+
+    public void RemoveMe()
+    {
+        if (Parent == null) return;
+
+        IPaneNode? currentParent = Parent;     // 自身の親（分割コンテナ）
+        
+        IPaneNode? grandParent = currentParent.Parent; // 自身の祖父
+
+        // 自分の相方（兄弟ノード：消されずに生き残る本物のデータノード）を特定
+        IPaneNode? sibling = (currentParent.MainChild == this)
+            ? currentParent.SubChild
+            : currentParent.MainChild;
+
+        if (sibling != null)
+        {
+            if (grandParent != null)
+            {
+                // 【パターンA：上にさらに親（祖父）がいる階層構造の場合】
+                // 祖父から見た古い親（currentParent）へのポインタを一度 null にしてキャッシュを破砕
+                bool isMainChild = (grandParent.MainChild == currentParent);
+                if (isMainChild)
+                {
+                    grandParent.MainChild = null;
+                    grandParent.RaisePropertyChanged(nameof(MainChild));
+                }
+                else
+                {
+                    grandParent.SubChild = null;
+                    grandParent.RaisePropertyChanged(nameof(SubChild));
+                }
+
+                // 役割を終えた中間のコンテナと自分のリンクを完全切断
+                currentParent.MainChild = null;
+                currentParent.SubChild = null;
+                currentParent.Parent = null;
+                this.Parent = null;
+
+                // 生き残った相方（sibling）のポインタを祖父へダイレクトに直結（バイパス）
+                sibling.Parent = grandParent;
+                if (isMainChild)
+                {
+                    grandParent.MainChild = sibling;
+                    grandParent.RaisePropertyChanged(nameof(MainChild));
+                }
+                else
+                {
+                    grandParent.SubChild = sibling;
+                    grandParent.RaisePropertyChanged(nameof(SubChild));
+                }
+
+                // 相方の全プロパティ通知をキックしてWPFを強制再描画
+                sibling.RaisePropertyChanged(string.Empty);
+            }
+            else
+            {
+                // 【パターンB：自分がルート直下の分割だった場合（上がWindowなど、grandParentがnull）】
+                // 祖父がいない場合は、親コンテナ（currentParent）を完全に『sibling』のクローンにするのではなく、
+                // 親コンテナの MainChild と SubChild 自体を sibling の持っていた子へ差し替えます。
+                // 1バイトのデータ破壊も起こさないよう、プロパティの「参照ポインタ」だけを安全にスライドさせます。
+                currentParent.MainChild = sibling.MainChild;
+                currentParent.SubChild = sibling.SubChild;
+                currentParent.Orientation = sibling.Orientation;
+                currentParent.SplitRatio = sibling.SplitRatio;
+
+                // 最重要：中身のデータ（ポインタ）をそのままアドレス移送
+                currentParent.TabViewModels = sibling.TabViewModels;
+                currentParent.SelectedTabIndex = sibling.SelectedTabIndex;
+                currentParent.ViewModel = sibling.ViewModel;
+
+                // 再結線
+                if (currentParent.MainChild != null) currentParent.MainChild.Parent = currentParent;
+                if (currentParent.SubChild != null) currentParent.SubChild.Parent = currentParent;
+
+                sibling.Parent = null;
+                this.Parent = null;
+
+
+                currentParent.RaisePropertyChanged(nameof(currentParent.MainChild));
+                currentParent.RaisePropertyChanged(nameof(currentParent.SubChild));
+                currentParent.RaisePropertyChanged(nameof(currentParent.Orientation));
+                currentParent.RaisePropertyChanged(nameof(currentParent.TabViewModels));
+                currentParent.RaisePropertyChanged(nameof(currentParent.ActiveViewModel));
+                // 親コンテナ側の通知を撃ち、Gridを詰め直させる
+                currentParent.RaisePropertyChanged(string.Empty);
+            }
+        }
+    }
+        /// <summary>
+     /// タブ引き抜き処理（トポロジーの自動自動クリーンアップ内包）
+     /// </summary>
     public virtual void RemoveTab(int index)
     {
         if (_tabViewModels == null || index < 0 || index >= _tabViewModels.Count) return;

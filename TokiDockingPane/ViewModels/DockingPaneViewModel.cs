@@ -1,5 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System;
+using System.Collections.ObjectModel;
+using System.Security.AccessControl;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -32,13 +35,14 @@ public partial class DockingPaneViewModel : Control
             nameof(RightToolRoot),
             typeof(IPaneNode),
             typeof(DockingPaneViewModel),
-            // 💡 解決の核心：単なる null ではなく、値が変わった瞬間にレイアウトを
-            // 100%強制的に再計算（FrameworkPropertyMetadataOptions.AffectsArrange）させる魔法のオプションを指定します！
             new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArrange | FrameworkPropertyMetadataOptions.AffectsRender, OnToolRootChanged));
 
     // 👈 左エリアツールルート
     public static readonly DependencyProperty LeftToolRootProperty =
-        DependencyProperty.Register(nameof(LeftToolRoot), typeof(IPaneNode), typeof(DockingPaneViewModel),
+        DependencyProperty.Register(
+            nameof(LeftToolRoot), 
+            typeof(IPaneNode), 
+            typeof(DockingPaneViewModel),
             new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArrange | FrameworkPropertyMetadataOptions.AffectsRender, OnToolRootChanged));
 
     // 👆 上エリアツールルート
@@ -74,50 +78,144 @@ public partial class DockingPaneViewModel : Control
     public IPaneNode RootDocumentNode
     {
         get => (IPaneNode)GetValue(RootDocumentNodeProperty);
-        set => SetValue(RootDocumentNodeProperty, value);
+        set  
+        {
+            value.RootVM = this;
+
+            value.ToolPainPosition = EnumToolPainPosition.None;
+
+            SetToolPainPosition(value);
+
+            SetValue(RootDocumentNodeProperty, value);
+        }
     }
 
     public IPaneNode? RightToolRoot
     {
         get => (IPaneNode?)GetValue(RightToolRootProperty);
-        set => SetValue(RightToolRootProperty, value);
+        set 
+        {
+            value.RootVM = this;
+
+            value.ToolPainPosition = EnumToolPainPosition.Right;
+
+            SetToolPainPosition(value);
+
+
+            SetValue(RightToolRootProperty, value);
+        }
     }
+
+    void SetToolPainPosition(IPaneNode nd)
+    {
+        if (nd == null) return;
+
+        if (nd.MainChild != null)
+        {
+            nd.MainChild.IsToolPane = nd.IsToolPane;
+            nd.MainChild.ToolPainPosition = nd.ToolPainPosition;
+
+            SetToolPainPosition(nd.MainChild);
+        }
+
+        if (nd.SubChild != null)
+        {
+            nd.SubChild.IsToolPane = nd.IsToolPane;
+            nd.SubChild.ToolPainPosition = nd.ToolPainPosition;
+
+            SetToolPainPosition(nd.SubChild);
+        }
+    }
+
+
 
     public IPaneNode? LeftToolRoot
     {
         get => (IPaneNode?)GetValue(LeftToolRootProperty);
-        set => SetValue(LeftToolRootProperty, value);
+        set
+        {
+            value.RootVM = this;
+
+            value.ToolPainPosition = EnumToolPainPosition.Left;
+
+            SetToolPainPosition(value);
+
+            SetValue(LeftToolRootProperty, value);
+        }
     }
 
     public IPaneNode? TopToolRoot
     {
         get => (IPaneNode?)GetValue(TopToolRootProperty);
-        set => SetValue(TopToolRootProperty, value);
+        set
+        {
+            value.RootVM = this;
+
+            value.ToolPainPosition = EnumToolPainPosition.Top;
+
+            SetToolPainPosition(value);
+
+            SetValue(TopToolRootProperty, value);
+        }
     }
 
     public IPaneNode? BottomToolRoot
     {
         get => (IPaneNode?)GetValue(BottomToolRootProperty);
-        set => SetValue(BottomToolRootProperty, value);
+        set
+        {
+            value.RootVM = this;
+
+            value.ToolPainPosition = EnumToolPainPosition.Bottom;
+
+            SetToolPainPosition(value);
+
+            SetValue(BottomToolRootProperty, value);
+        }
     }
+     
+    [ObservableProperty]
+    private ObservableCollection<PaneContentNode> _RightHiddenPanes = new();
 
-    public IEnumerable<PaneContentNode> RightHiddenPanes => GetHiddenPanes(RightToolRoot);
-    public IEnumerable<PaneContentNode> LeftHiddenPanes => GetHiddenPanes(LeftToolRoot);
-    public IEnumerable<PaneContentNode> TopHiddenPanes => GetHiddenPanes(TopToolRoot);
-    public IEnumerable<PaneContentNode> BottomHiddenPanes => GetHiddenPanes(BottomToolRoot);
+    [ObservableProperty]
+    private ObservableCollection<PaneContentNode> _LeftHiddenPanes = new();
+
+    [ObservableProperty]
+    private ObservableCollection<PaneContentNode> _TopHiddenPanes = new();
+
+    [ObservableProperty]
+    private ObservableCollection<PaneContentNode> _BottomHiddenPanes = new();
 
 
+    public static readonly DependencyProperty OverlayPaneNodeProperty =
+        DependencyProperty.Register(
+            nameof(OverlayPaneNode),
+            typeof(PaneContentNode),
+            typeof(DockingPaneViewModel),
+            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArrange | FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public PaneContentNode? OverlayPaneNode
+    {
+        get => (PaneContentNode?)GetValue(OverlayPaneNodeProperty);
+        set => SetValue(OverlayPaneNodeProperty, value); // 💡 これでWPFの最深部メモリに直接データが書き込まれます！
+    }
 
     static DockingPaneViewModel()
     {
+
         DefaultStyleKeyProperty.OverrideMetadata(typeof(DockingPaneViewModel),
             new FrameworkPropertyMetadata(typeof(DockingPaneViewModel)));
     }
 
     public DockingPaneViewModel(IPaneNode rootDocument)
     {
+        rootDocument.RootVM = this;
+
         RootDocumentNode = rootDocument;
-     }
+
+
+        //this.DataContext = this;
+    }
 
     public DockingPaneViewModel()
     {
@@ -130,6 +228,12 @@ public partial class DockingPaneViewModel : Control
         this.Drop += OnOuterDrop;
         this.PreviewMouseDown += OnPreviewMouseDown;
 
+
+
+
+
+
+        //this.DataContext = this;
     }
     public override void OnApplyTemplate()
     {
@@ -154,27 +258,122 @@ public partial class DockingPaneViewModel : Control
 
     }
 
+
+    [RelayCommand]
+    private void ToggleOverlay(object parameter)
+    {
+        if (parameter is PaneContentNode clickedNode)
+        {
+            if (OverlayPaneNode == clickedNode)
+            {
+                OverlayPaneNode = null;
+                System.Diagnostics.Debug.WriteLine("[AutoHidden] ポップアップを閉じました。");
+            }
+            else
+            {
+                OverlayPaneNode = clickedNode; // 💡 ココで正しく「DependencyProperty」のSetValueが叩かれます！
+                System.Diagnostics.Debug.WriteLine($"[AutoHidden] ポップアップを一時展開しました: {clickedNode.SelectedTab?.Title}");
+            }
+        }
+    }
+
+
+
+
+
+
     // 【裏方のツリー巡回ロジック】隠れている末端ノードをすべて抽出する
-    private List<PaneContentNode> GetHiddenPanes(IPaneNode? root)
+    private List<PaneContentNode> GetHiddenPanes(
+        IPaneNode? root )
+    {
+        if (root == null) return null;
+
+        var list = new List<PaneContentNode>();
+
+        //var sss = HiddenPanes;
+
+        list.AddRange(GetHiddenPanesSub(root));
+        return list;
+    }
+
+    private List<PaneContentNode> GetHiddenPanesSub(IPaneNode? root)
     {
         var list = new List<PaneContentNode>();
         if (root is PaneContentNode node)
         {
-            if (node.IsAutoHidden && node.IsToolPane) list.Add(node);
-            list.AddRange(GetHiddenPanes(node.MainChild));
-            list.AddRange(GetHiddenPanes(node.SubChild));
+            if (node.IsAutoHidden && node.IsToolPane)
+            {
+                list.Add(node);
+
+
+                //    node.RemoveMe();
+
+
+            }
+            list.AddRange(GetHiddenPanesSub(node.MainChild));
+            list.AddRange(GetHiddenPanesSub(node.SubChild));
         }
         return list;
     }
 
-    public void RefreshHiddenPanes()
-    {
-        // 💡 自分の内部からであれば、PropertyChangedイベントを安全に100%発火させることができます！
-        this.PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(RightHiddenPanes)));
-        this.PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(LeftHiddenPanes)));
 
+    public void AddHiddenPane(PaneContentNode node)
+    {
+        if(node == null || node.IsToolPane == false) return;
+
+        switch( node.ToolPainPosition  )
+        {
+            case EnumToolPainPosition.Right:
+
+                RightHiddenPanes.Add(node);
+                this.PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(RightHiddenPanes)));
+
+                break;
+
+            case EnumToolPainPosition.Left:
+
+                LeftHiddenPanes.Add(node);
+                this.PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(LeftHiddenPanes)));
+
+                break;
+
+            case EnumToolPainPosition.Top:
+
+                TopHiddenPanes.Add(node);
+                this.PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(TopHiddenPanes)));
+                
+
+                break;
+
+            case EnumToolPainPosition.Bottom:
+
+                BottomHiddenPanes.Add(node);
+                this.PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(BottomHiddenPanes)));
+                break;
+
+        }
+    }
+
+    public void RefreshHiddenPanes(PaneContentNode node=null)
+    {
+
+
+
+
+        //// 💡 自分の内部からであれば、PropertyChangedイベントを安全に100%発火させることができます！
+
+     
         System.Diagnostics.Debug.WriteLine("[ViewModel] 隠しペインサイドバーの再計算通知を代理発射しました。");
     }
+
+ 
+
+
+
+
+
+
+
 
     private bool IsLeftOuter(PaneContentNode node)
     {
@@ -344,9 +543,9 @@ public partial class DockingPaneViewModel : Control
         sourceNode.RemoveTab(dragIndex);
 
         // 💡 1. 引き抜いたタブを詰め込んだ、独立した新しい「ツールペイン（葉）」を生成
-        var newToolLeaf = new PaneContentNode(dropPain, isToolPane: true);
+        var newToolLeaf = new PaneContentNode(dropPain, isToolPane: sourceNode.IsToolPane);
         newToolLeaf.CanAutoHide = true;
-        newToolLeaf.IsToolPane = true;
+        newToolLeaf.IsToolPane = sourceNode.IsToolPane;
 
         // 💡 2. これまでの画面全体のルート（ツリー全体）を退避して確保
         var oldRoot = RootDocumentNode;
