@@ -4,8 +4,8 @@
     xmlns:conv="clr-namespace:TokiDockingPane.Converters"
     xmlns:local="clr-namespace:TokiDockingPane"
     xmlns:models="clr-namespace:TokiDockingPane.Models"
-    xmlns:uc="clr-namespace:TokiDockingPane.UserControls"
     xmlns:sysDiag="clr-namespace:System.Diagnostics;assembly=WindowsBase"
+    xmlns:uc="clr-namespace:TokiDockingPane.UserControls"
     xmlns:viewModels="clr-namespace:TokiDockingPane.ViewModels">
 
     <conv:DoubleToGridLengthConverter x:Key="DoubleToGridLengthConverter" />
@@ -70,7 +70,7 @@
                             <!--  5: 👉右常設ツール  -->
                             <ColumnDefinition
                                 x:Name="Col_RightTool"
-                                Width="*"
+                                Width="Auto"
                                 MinWidth="0" />
 
                             <!--  6: 右端サイドバー  -->
@@ -277,7 +277,7 @@
                             Grid.RowSpan="1"
                             Grid.Column="5"
                             Content="{Binding RightToolRoot, RelativeSource={RelativeSource TemplatedParent}}"
-                            Visibility="Visible">
+                             >
                             <ContentPresenter.Resources>
                                 <DataTemplate DataType="{x:Type models:PaneContentNode}">
                                     <local:DockingPane Content="{Binding}" DataContext="{Binding}" />
@@ -285,9 +285,15 @@
                             </ContentPresenter.Resources>
                             <ContentPresenter.Style>
                                 <Style TargetType="ContentPresenter">
+                                    <Setter Property="Visibility" Value="Visible" />
+ 
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding RightToolRoot, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}" Value="{x:Null}">
+                                        <DataTrigger 
+                                            Binding="{Binding RightToolRoot.IsPinned, 
+                                            RelativeSource={RelativeSource TemplatedParent}}" 
+                                            Value="false">
                                             <Setter Property="Visibility" Value="Collapsed" />
+ 
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -299,19 +305,21 @@
 
                         <!--  🌟 右端 AutoHidden 専用サイドバー（タブヘッダー領域）  -->
                         <!--  💡 隠れているツールが 1 つ以上あるときだけ、画面の本当の右端に自動で出現します  -->
+                   
+                            
                         <ItemsControl
-                            x:Name="PART_RightAutoHiddenHedder"
-                            Grid.Row="0"
-                            Grid.RowSpan="7"
-                            Grid.Column="6"
-                            Width="Auto"
-                            Panel.ZIndex="10000"
+                              x:Name="PART_RightAutoHiddenHedder"
+  Grid.Row="0"
+  Grid.RowSpan="7"
+  Grid.Column="6"
+  Width="Auto"
+                              Panel.ZIndex="10000"
+
                             Background="#FF2D2D30"
                             BorderBrush="#FF3F3F46"
                             BorderThickness="1,0,0,0"
                             ItemsSource="{Binding RightHiddenPanes, RelativeSource={RelativeSource TemplatedParent}}"
                             Visibility="Visible">
-                            <!--  何よりも手前に配置  -->
 
                             <!--  タブボタンを「上から下」へ縦に並べるパネル  -->
                             <ItemsControl.ItemsPanel>
@@ -354,6 +362,7 @@
                         </ItemsControl>
 
 
+
                         <GridSplitter
                             x:Name="PART_RightSplitter"
                             Grid.Row="3"
@@ -363,22 +372,63 @@
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
                             Background="#FF3E3E42"
-                            Visibility="Visible" />
+                          >
 
-                        <ContentPresenter x:Name="PART_RightOverlayContent"
-                  Grid.Row="3"
-                  Grid.Column="3"
-                  Grid.ColumnSpan="3"
-                  HorizontalAlignment="Right"
-                  Width="250" 
-                  Panel.ZIndex="50000"
-           Content="{Binding OverlayPaneNode, 
-                           RelativeSource={RelativeSource TemplatedParent}, 
-                           sysDiag:PresentationTraceSources.TraceLevel=High}">
 
-                            <!-- 🎯【大開通の核心】：Resourcesに逃げるのをやめ、ContentTemplateに直接設計図をハンダ付けします！
-            これにより、WPFのライフサイクルロックを完全にすり抜け、
-            クリックした瞬間にライブビジュアルツリーの下に本物の DockingPane が100%確実にぶら下がります！ -->
+                            <GridSplitter.Style>
+                                <Style TargetType="GridSplitter">
+                                    <Setter Property="Visibility" Value="Visible" />
+
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding RightToolRoot.IsPinned, RelativeSource={RelativeSource TemplatedParent}}" Value="false">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </GridSplitter.Style>
+                        </GridSplitter>
+
+
+
+                        <!--<TextBlock
+                            Grid.Row="3"
+                            Grid.Column="3"
+                            Grid.ColumnSpan="2"
+                            Width="250"
+                            Panel.ZIndex="50000"
+                            Text="hoge">
+
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Setter Property="Background" Value="Red" />
+                                    <Style.Triggers>
+
+                                        <DataTrigger Binding="{Binding OverlayPaneNode.IsAutoHidden}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Setter Property="Background" Value="YellowGreen" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+
+                        </TextBlock>-->
+
+
+
+
+
+                        <!--<ContentPresenter
+                            x:Name="PART_RightOverlayContent"
+                            Grid.Row="3"
+                            Grid.Column="3"
+                            Grid.ColumnSpan="3"
+                            Width="250"
+                            HorizontalAlignment="Right"
+                            Panel.ZIndex="50000"
+                            Content="{Binding OverlayPaneNode, RelativeSource={RelativeSource TemplatedParent}}">
+
                             <ContentPresenter.ContentTemplate>
                                 <DataTemplate DataType="{x:Type models:PaneContentNode}">
                                     <local:DockingPane Content="{Binding}" DataContext="{Binding}" />
@@ -387,23 +437,42 @@
 
                             <ContentPresenter.Style>
                                 <Style TargetType="ContentPresenter">
-                                    <!-- デフォルト（データがある時）は表示 -->
-                                    <Setter Property="Visibility" Value="Visible" />
+                                     <Setter Property="Visibility" Value="Visible" />
                                     <Style.Triggers>
-                                        <!-- ⚡ 頭脳（OverlayPaneNode）が空（null）の時だけ、ピンポイントで非表示（Collapsed）に叩き落とします -->
-                                        <DataTrigger Binding="{Binding OverlayPaneNode, RelativeSource={RelativeSource TemplatedParent}}" 
-                             Value="{x:Null}">
+                                         
+                                        <DataTrigger Binding="{Binding OverlayPaneNode.IsAutoHidden}" Value="True">
                                             <Setter Property="Visibility" Value="Collapsed" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </ContentPresenter.Style>
-                        </ContentPresenter>
+                        </ContentPresenter>-->
 
+                        <Popup x:Name="PART_RightOverlayPopup"
+       
+                            PlacementTarget="{Binding ElementName=PART_RightContent}" 
+       Placement="Left"
+       HorizontalOffset="-250"
+                          
+                            IsOpen="{Binding OverlayPaneNode.IsAutoHidden }"
 
+                          
+                            StaysOpen="False"
+       AllowsTransparency="True"
+       PopupAnimation="Slide">
+                            <!-- 開閉時にVSのような滑らかなスライド演出を付与 -->
 
-
-
+                            <!-- 🎯 250px の部屋（local:DockingPane）を浮かび上がらせる設計図 -->
+                            <Border Width="250" Height="400" Background="#FF1E1E1E" BorderBrush="#FF3E3E42" BorderThickness="1">
+                                <ContentControl Content="{Binding OverlayPaneNode, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <ContentControl.ContentTemplate>
+                                        <DataTemplate DataType="{x:Type models:PaneContentNode}">
+                                            <local:DockingPane Content="{Binding}" DataContext="{Binding}" />
+                                        </DataTemplate>
+                                    </ContentControl.ContentTemplate>
+                                </ContentControl>
+                            </Border>
+                        </Popup>
 
 
 

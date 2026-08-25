@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using TokiDockingPane.Interfaces;
 using TokiDockingPane.ViewModels;
@@ -56,12 +57,24 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     [ObservableProperty]
     private bool _isPinned = true;
 
+    partial void OnIsPinnedChanged(bool oldValue, bool newValue)
+    {
+        Debug.WriteLine($"IsPinned:{IsPinned}");
+    }
+
     [ObservableProperty]
     private bool _canAutoHide = false;
 
     // ✨ 現在ピン留めが外れて、実際に「隠れている（ボタン化している）」状態かどうか
     [ObservableProperty]
     private bool _isAutoHidden = false;
+
+    partial void OnIsAutoHiddenChanged(bool oldValue, bool newValue)
+    {
+        Debug.WriteLine($"IsPinned:{IsPinned}");
+
+        Debug.WriteLine($"IsAutoHidden:{IsAutoHidden}");
+    }
 
   
 

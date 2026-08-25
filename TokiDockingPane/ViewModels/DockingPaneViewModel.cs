@@ -264,14 +264,16 @@ public partial class DockingPaneViewModel : Control
     {
         if (parameter is PaneContentNode clickedNode)
         {
-            if (OverlayPaneNode == clickedNode)
+            OverlayPaneNode = clickedNode;
+
+            if (OverlayPaneNode.IsAutoHidden  == true)
             {
-                OverlayPaneNode = null;
+                OverlayPaneNode.IsAutoHidden = false;
                 System.Diagnostics.Debug.WriteLine("[AutoHidden] ポップアップを閉じました。");
             }
             else
             {
-                OverlayPaneNode = clickedNode; // 💡 ココで正しく「DependencyProperty」のSetValueが叩かれます！
+                OverlayPaneNode.IsAutoHidden = true;
                 System.Diagnostics.Debug.WriteLine($"[AutoHidden] ポップアップを一時展開しました: {clickedNode.SelectedTab?.Title}");
             }
         }

@@ -88,11 +88,11 @@ public partial class MainWindow : Window
 
         // 🎯 5. 頂点ノードだけを ViewModel に渡して DataContext に直結
         var mainVM = new DockingPaneViewModel(rootDocument );
-        mainVM.RightToolRoot = solutionExplorerNode;
-        mainVM.RightToolRoot.ToolPainPosition = EnumToolPainPosition.Right;
+        mainVM.BottomToolRoot = solutionExplorerNode;
+        mainVM.BottomToolRoot.ToolPainPosition = EnumToolPainPosition.Bottom;
 
 
-        mainVM.BottomToolRoot = t2;
+        mainVM.RightToolRoot = t2;
         
          
 
