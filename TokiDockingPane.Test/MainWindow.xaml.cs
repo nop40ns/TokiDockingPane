@@ -113,11 +113,11 @@ public partial class MainWindow : Window
 
 
         DP.TopToolRoot = t4;
-        DP.TopToolRoot.ToolPainPosition = EnumToolPainPosition.Top;
+        //DP.TopToolRoot.ToolPainPosition = EnumToolPainPosition.Top;
 
-        DP.Refresh();
+        //  DP.Refresh();
 
-      //  this.DataContext = mainVM;
+        //  this.DataContext = mainVM;
 
     }
 

@@ -62,10 +62,12 @@ public interface IPaneNode : IDisposable, INotifyPropertyChanged
     public IPaneNode? SubChild { get; set; }
     public IPaneNode? Parent { get; set; }
 
+    public string ID { get; set; }
 
-  /// <summary>
-  ///  public DockingPaneViewModel RootVM { get; set; }
-  /// </summary>
+
+    /// <summary>
+    ///  public DockingPaneViewModel RootVM { get; set; }
+    /// </summary>
 
     public string Title { get; set; }
 

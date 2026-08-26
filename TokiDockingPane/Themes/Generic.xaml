@@ -193,9 +193,12 @@
                             <!--  ⚡ [全自動緊縮]：データが null の時は、250pxのマス目ごと物理的に 0px へ完全消滅させます  -->
                             <ContentPresenter.Style>
                                 <Style TargetType="ContentPresenter">
+                                    <Setter Property="Visibility" Value="Visible" />
+
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding LeftToolRoot.IsPinned, RelativeSource={RelativeSource TemplatedParent}}" Value="false">
+                                        <DataTrigger Binding="{Binding IsLeftToolRoot, RelativeSource={RelativeSource TemplatedParent}}" Value="false">
                                             <Setter Property="Visibility" Value="Collapsed" />
+
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -215,7 +218,20 @@
                             BorderThickness="1,0,0,0"
                             ItemsSource="{Binding LeftHiddenPanes, RelativeSource={RelativeSource TemplatedParent}}"
                             Visibility="Visible">
+                            
+                            <ItemsControl.Style>
+                                <Style TargetType="ItemsControl">
+                                    <Setter Property="Visibility" Value="Visible" />
 
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsLeftToolRoot, RelativeSource={RelativeSource TemplatedParent}}" Value="false">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ItemsControl.Style>
+                            
                             <!--  タブボタンを「上から下」へ縦に並べるパネル  -->
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -265,7 +281,7 @@
                                     <Setter Property="Visibility" Value="Visible" />
 
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding LeftToolRoot.IsPinned, RelativeSource={RelativeSource TemplatedParent}}" Value="false">
+                                        <DataTrigger Binding="{Binding IsLeftToolRoot, RelativeSource={RelativeSource TemplatedParent}}" Value="false">
                                             <Setter Property="Visibility" Value="Collapsed" />
 
                                         </DataTrigger>
@@ -346,7 +362,7 @@
                                     <Setter Property="Visibility" Value="Visible" />
 
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding RightToolRoot.IsPinned, RelativeSource={RelativeSource TemplatedParent}}" Value="false">
+                                        <DataTrigger Binding="{Binding IsRightContent,RelativeSource={RelativeSource TemplatedParent}}" Value="false">
                                             <Setter Property="Visibility" Value="Collapsed" />
 
                                         </DataTrigger>
@@ -367,6 +383,19 @@
                             BorderBrush="#FF3F3F46"
                             BorderThickness="1,0,0,0"
                             ItemsSource="{Binding RightHiddenPanes, RelativeSource={RelativeSource TemplatedParent}}">
+
+                            <ItemsControl.Style>
+                                <Style TargetType="ItemsControl">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsRightAutoHiddenHedder, RelativeSource={RelativeSource TemplatedParent}}" Value="True ">
+                                            <Setter Property="Visibility" Value="Visible" />
+
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ItemsControl.Style>
 
                             <!--  タブボタンを「上から下」へ縦に並べるパネル  -->
                             <ItemsControl.ItemsPanel>
@@ -420,9 +449,8 @@
                                     <Setter Property="Visibility" Value="Visible" />
 
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding RightToolRoot.IsPinned, RelativeSource={RelativeSource TemplatedParent}}" Value="false">
+                                        <DataTrigger Binding="{Binding IsRightContent,RelativeSource={RelativeSource TemplatedParent}}" Value="false">
                                             <Setter Property="Visibility" Value="Collapsed" />
-
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -430,7 +458,7 @@
                         </GridSplitter>
 
                         <!--  👉 右隠しエリア  -->
-                        <Grid
+                        <Grid x:Name="PART_RightOverlayPaneNode"
                             Grid.Row="3"
                             Grid.Column="3"
                             Grid.ColumnSpan="1"
@@ -441,11 +469,9 @@
                                 <Style TargetType="Grid">
                                     <Setter Property="Visibility" Value="Collapsed" />
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding RightOverlayPaneNode.IsPinned}" Value="false">
+                                        <DataTrigger Binding="{Binding IsRightOverlayPaneNode,RelativeSource={RelativeSource TemplatedParent}}" Value="True">
                                             <Setter Property="Visibility" Value="Visible" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding RightOverlayPaneNode.IsAutoHidden}" Value="True">
-                                            <Setter Property="Visibility" Value="Collapsed" />
+
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -453,7 +479,6 @@
 
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
-
                                 <ColumnDefinition Width="auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
@@ -463,18 +488,21 @@
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Stretch"
                                 Background="#FF3E3E42"
-                                Visibility="Visible" />
+                                />
 
-
+                            <TextBlock Text="hogehoe"   Foreground="Wheat"                               Grid.Column="2"
+>
+                                
+                            </TextBlock>
 
 
                             <ContentPresenter
                                 x:Name="PART_RightOverlayContent"
                                 Grid.Column="2"
-                                Panel.ZIndex="50000"
+                                Panel.ZIndex="150000"
                                 Content="{Binding RightOverlayPaneNode}">
 
-                                <ContentPresenter.ContentTemplate>
+                                <ContentPresenter.ContentTemplate >
                                     <DataTemplate DataType="{x:Type models:PaneContentNode}">
                                         <local:DockingPane Content="{Binding}" DataContext="{Binding}" />
                                     </DataTemplate>
@@ -501,8 +529,10 @@
                             </ContentPresenter.Resources>
                             <ContentPresenter.Style>
                                 <Style TargetType="ContentPresenter">
+                                    <Setter Property="Visibility" Value="Visible" />
+
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding TopToolRoot.IsPinned, RelativeSource={RelativeSource TemplatedParent}}" Value="false">
+                                        <DataTrigger Binding="{Binding IsTopToolRoot,RelativeSource={RelativeSource TemplatedParent}}" Value="false">
                                             <Setter Property="Visibility" Value="Collapsed" />
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -510,19 +540,6 @@
                             </ContentPresenter.Style>
 
                         </ContentPresenter>
-
-
-                        <!--  👆 上スプリッターエリア  -->
-                        <GridSplitter
-                            x:Name="PART_TopSplitter"
-                            Grid.Row="2"
-                            Grid.Column="0"
-                            Grid.ColumnSpan="7"
-                            Height="12"
-                            HorizontalAlignment="Stretch"
-                            VerticalAlignment="Stretch"
-                            Background="#FF3E3E42"
-                            Visibility="Visible" />
 
 
                         <!--  👆 上ヘッダーエリア  -->
@@ -545,6 +562,18 @@
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
 
+                            <ItemsControl.Style>
+                                <Style TargetType="ItemsControl">
+                                    <Setter Property="Visibility" Value="Visible" />
+
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsTopToolRoot, RelativeSource={RelativeSource TemplatedParent}}" Value="false">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ItemsControl.Style>
                             <!--  🎯 VSそっくりの「縦書きタブボタン」のデザイン  -->
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -565,7 +594,35 @@
                                     </ToggleButton>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
+
+                     
+
                         </ItemsControl>
+                        <!--  👆 上スプリッターエリア  -->
+                        <GridSplitter
+                            x:Name="PART_TopSplitter"
+                            Grid.Row="2"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="7"
+                            Height="12"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Background="#FF3E3E42"
+                              >
+                            <GridSplitter.Style>
+                                <Style TargetType="GridSplitter">
+                                    <Setter Property="Visibility" Value="Visible" />
+
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsTopToolRoot, RelativeSource={RelativeSource TemplatedParent}}" Value="false">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </GridSplitter.Style>
+                        </GridSplitter>
+
+
 
                         <!--  👆 上隠しエリア  -->
                         <Grid
@@ -580,6 +637,8 @@
                                 <Style TargetType="Grid">
                                     <Setter Property="Visibility" Value="Collapsed" />
                                     <Style.Triggers>
+ 
+
                                         <DataTrigger Binding="{Binding TopOverlayPaneNode.IsPinned}" Value="false">
                                             <Setter Property="Visibility" Value="Visible" />
                                         </DataTrigger>
@@ -618,7 +677,7 @@
                                 </ContentPresenter.ContentTemplate>
 
                             </ContentPresenter>
-
+                            
                         </Grid>
 
 
@@ -636,8 +695,10 @@
                             </ContentPresenter.Resources>
                             <ContentPresenter.Style>
                                 <Style TargetType="ContentPresenter">
+                                    <Setter Property="Visibility" Value="Visible" />
+
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding BottomToolRoot, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}" Value="{x:Null}">
+                                        <DataTrigger Binding="{Binding IsBottomToolRoot, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}" Value="false">
                                             <Setter Property="Visibility" Value="Collapsed" />
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -655,7 +716,20 @@
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
                             Background="#FF3E3E42"
-                            Visibility="Visible" />
+                             >
+
+                            <GridSplitter.Style>
+                                <Style TargetType="GridSplitter">
+                                    <Setter Property="Visibility" Value="Visible" />
+
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsBottomToolRoot, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}" Value="false">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </GridSplitter.Style>
+                        </GridSplitter>
 
                         <!--  👇 下ヘッダーエリア  -->
                         <ItemsControl
@@ -754,32 +828,33 @@
 
 
                     </Grid>
-                    <ControlTemplate.Triggers>
+                    
+                    <!--<ControlTemplate.Triggers>
 
-                        <!--  =========================================================================  -->
+                        --><!--  =========================================================================  -->
                         <!--  👉 【右エリア】の自動消滅＆緊縮トリガー  -->
                         <!--  =========================================================================  -->
-                        <!--  💡 条件1: そもそも右側のデータ（RightToolRoot）が空っぽの時  -->
+                        <!--  💡 条件1: そもそも右側のデータ（RightToolRoot）が空っぽの時  --><!--
                         <DataTrigger Binding="{Binding RightToolRoot}" Value="{x:Null}">
                             <Setter TargetName="Col_RightTool" Property="Width" Value="0" />
                             <Setter TargetName="PART_RightSplitter" Property="Visibility" Value="Collapsed" />
                         </DataTrigger>
 
-                        <!--  💡 条件2: 画鋲が外されて、右エリアのツールペインが「自動隠蔽（AutoHidden）」状態になった時  -->
+                        --><!--  💡 条件2: 画鋲が外されて、右エリアのツールペインが「自動隠蔽（AutoHidden）」状態になった時  -->
                         <!--
                             🎯【これぞ本物のVS風挙動！】：
                             データは裏側に残したまま、右の列幅を「0」にしてセパレータもCollapsedに追い込みます。
                             これによって黒い隙間が1ミリも残らず、中央のエディタが画面右端までググッと全自動で広がります！
-                        -->
+                        --><!--
                         <DataTrigger Binding="{Binding RightToolRoot.IsAutoHidden}" Value="True">
                             <Setter TargetName="Col_RightTool" Property="Width" Value="0" />
                             <Setter TargetName="PART_RightSplitter" Property="Visibility" Value="Collapsed" />
                         </DataTrigger>
 
 
-                        <!--  =========================================================================  -->
+                        --><!--  =========================================================================  -->
                         <!--  👈 【左エリア】の自動消滅＆緊縮トリガー  -->
-                        <!--  =========================================================================  -->
+                        <!--  =========================================================================  --><!--
                         <DataTrigger Binding="{Binding LeftToolRoot}" Value="{x:Null}">
                             <Setter TargetName="Col_LeftTool" Property="Width" Value="0" />
                             <Setter TargetName="PART_LeftSplitter" Property="Visibility" Value="Collapsed" />
@@ -790,9 +865,9 @@
                         </DataTrigger>
 
 
-                        <!--  =========================================================================  -->
+                        --><!--  =========================================================================  -->
                         <!--  👆 【上エリア】の自動消滅＆緊縮トリガー  -->
-                        <!--  =========================================================================  -->
+                        <!--  =========================================================================  --><!--
                         <DataTrigger Binding="{Binding TopToolRoot}" Value="{x:Null}">
                             <Setter TargetName="Row_TopTool" Property="Height" Value="0" />
                             <Setter TargetName="PART_TopSplitter" Property="Visibility" Value="Collapsed" />
@@ -803,9 +878,9 @@
                         </DataTrigger>
 
 
-                        <!--  =========================================================================  -->
+                        --><!--  =========================================================================  -->
                         <!--  👇 【下エリア】の自動消滅＆緊縮トリガー  -->
-                        <!--  =========================================================================  -->
+                        <!--  =========================================================================  --><!--
                         <DataTrigger Binding="{Binding BottomToolRoot}" Value="{x:Null}">
                             <Setter TargetName="Row_BottomTool" Property="Height" Value="0" />
                             <Setter TargetName="PART_BottomSplitter" Property="Visibility" Value="Collapsed" />
@@ -815,7 +890,7 @@
                             <Setter TargetName="PART_BottomSplitter" Property="Visibility" Value="Collapsed" />
                         </DataTrigger>
 
-                    </ControlTemplate.Triggers>
+                    </ControlTemplate.Triggers>-->
 
                 </ControlTemplate>
             </Setter.Value>

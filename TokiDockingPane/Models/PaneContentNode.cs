@@ -19,7 +19,7 @@ namespace TokiDockingPane.Models;
 public partial class PaneContentNode :ObservableObject , IPaneNode
 {
 
-    public string ID = "";
+    public string ID { get; set; }= "";
 
     [ObservableProperty]
     private IPaneNode? _parent;
