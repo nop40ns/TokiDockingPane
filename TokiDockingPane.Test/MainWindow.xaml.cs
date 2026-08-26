@@ -36,6 +36,8 @@ public partial class MainWindow : Window
             "C:\\xxx",
             "C:\\yyy",
             "C:\\zzz",
+            "C:\\aaa",
+            "C:\\bbb",
         };
         // 🔷 1. 中央領域（エディタ）の末端ペインたちを生成 (isToolPane: false)
         var node左上 
@@ -73,31 +75,50 @@ public partial class MainWindow : Window
         var t0 = new PaneContentNode(new TabViewModel(l[0], new LuncherViewModelWPF(l[0])), isToolPane: true);
         var t1 = new PaneContentNode(new TabViewModel(l[1], new LuncherViewModelWPF(l[1])), isToolPane: true);
         var t2 = new PaneContentNode(new TabViewModel(l[2], new LuncherViewModelWPF(l[2])), isToolPane: true);
+        var t3 = new PaneContentNode(new TabViewModel(l[3], new LuncherViewModelWPF(l[3])), isToolPane: true);
+        var t4 = new PaneContentNode(new TabViewModel(l[4], new LuncherViewModelWPF(l[4])), isToolPane: true);
+
+        t0.ID = "t0";
+
+        t1.ID = "t1";
+        t2.ID = "t2";
+        t3.ID = "t3";
+        t4.ID = "t4";
 
         // 🔷 3. 右端のツール領域の末端ペインを生成 (isToolPane: true)
         var solutionExplorerNode = new PaneContentNode() { Orientation = EnumOrientation.Horizontal };
         solutionExplorerNode.IsToolPane = true;
 
         solutionExplorerNode.ID = "solutionExplorerNode";
-        t0.ID = "t0";
-        t1.ID = "t1";
+
 
         solutionExplorerNode.MainChild = t0;
-        solutionExplorerNode.SubChild = t1;
-         
+        solutionExplorerNode.SubChild = t1; 
 
         // 🎯 5. 頂点ノードだけを ViewModel に渡して DataContext に直結
         var mainVM = new DockingPaneViewModel(rootDocument );
+        
         mainVM.BottomToolRoot = solutionExplorerNode;
         mainVM.BottomToolRoot.ToolPainPosition = EnumToolPainPosition.Bottom;
 
 
         mainVM.RightToolRoot = t2;
-        
-         
+        mainVM.RightToolRoot.ToolPainPosition = EnumToolPainPosition.Right;
+
+        t3.ID = "t3";
+        mainVM.LeftToolRoot = t3;
+        mainVM.LeftToolRoot.ToolPainPosition = EnumToolPainPosition.Left;
+
+
+        mainVM.TopToolRoot = t4;
+        mainVM.TopToolRoot.ToolPainPosition = EnumToolPainPosition.Top;
+
+        mainVM.Refresh();
 
         this.DataContext = mainVM;
 
     }
+
+
     　
 }

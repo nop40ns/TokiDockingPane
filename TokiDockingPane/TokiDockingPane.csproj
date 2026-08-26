@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="新しいフォルダー\" />
+    <Folder Include="新しいフォルダー1\" />
   </ItemGroup>
 
 </Project>

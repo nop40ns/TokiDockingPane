@@ -1,13 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using System;
 using System.Collections.ObjectModel;
-using System.Security.AccessControl;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
+using System.Xml.Linq;
 using TokiDockingPane.Interfaces;
+using TokiDockingPane.Messages;
 using TokiDockingPane.Models;
 
 namespace TokiDockingPane.ViewModels;
@@ -68,6 +66,26 @@ public partial class DockingPaneViewModel : Control
     }
 
 
+
+    [ObservableProperty]
+    private ObservableCollection<PaneContentNode> _RightHiddenPanes = new();
+
+    [ObservableProperty]
+    private ObservableCollection<PaneContentNode> _LeftHiddenPanes = new();
+
+    [ObservableProperty]
+    private ObservableCollection<PaneContentNode> _TopHiddenPanes = new();
+
+    [ObservableProperty]
+    private ObservableCollection<PaneContentNode> _BottomHiddenPanes = new();
+
+
+
+
+
+
+    TreeContext? _context { get; set; }
+
     // XAML側の最外殻パーツを一本釣りするためのプライベートポインタ
     private Grid? _indicatorOuter;
     private Border? _outerTop;
@@ -80,7 +98,6 @@ public partial class DockingPaneViewModel : Control
         get => (IPaneNode)GetValue(RootDocumentNodeProperty);
         set  
         {
-            value.RootVM = this;
 
             value.ToolPainPosition = EnumToolPainPosition.None;
 
@@ -95,8 +112,6 @@ public partial class DockingPaneViewModel : Control
         get => (IPaneNode?)GetValue(RightToolRootProperty);
         set 
         {
-            value.RootVM = this;
-
             value.ToolPainPosition = EnumToolPainPosition.Right;
 
             SetToolPainPosition(value);
@@ -134,8 +149,6 @@ public partial class DockingPaneViewModel : Control
         get => (IPaneNode?)GetValue(LeftToolRootProperty);
         set
         {
-            value.RootVM = this;
-
             value.ToolPainPosition = EnumToolPainPosition.Left;
 
             SetToolPainPosition(value);
@@ -149,8 +162,6 @@ public partial class DockingPaneViewModel : Control
         get => (IPaneNode?)GetValue(TopToolRootProperty);
         set
         {
-            value.RootVM = this;
-
             value.ToolPainPosition = EnumToolPainPosition.Top;
 
             SetToolPainPosition(value);
@@ -164,8 +175,6 @@ public partial class DockingPaneViewModel : Control
         get => (IPaneNode?)GetValue(BottomToolRootProperty);
         set
         {
-            value.RootVM = this;
-
             value.ToolPainPosition = EnumToolPainPosition.Bottom;
 
             SetToolPainPosition(value);
@@ -174,31 +183,25 @@ public partial class DockingPaneViewModel : Control
         }
     }
      
-    [ObservableProperty]
-    private ObservableCollection<PaneContentNode> _RightHiddenPanes = new();
 
     [ObservableProperty]
-    private ObservableCollection<PaneContentNode> _LeftHiddenPanes = new();
+    private PaneContentNode? _leftOverlayPaneNode;
 
     [ObservableProperty]
-    private ObservableCollection<PaneContentNode> _TopHiddenPanes = new();
+    private PaneContentNode? _rightOverlayPaneNode;
 
     [ObservableProperty]
-    private ObservableCollection<PaneContentNode> _BottomHiddenPanes = new();
+    private PaneContentNode? _topOverlayPaneNode;
 
+    [ObservableProperty]
+    private PaneContentNode? _bottomOverlayPaneNode;
 
-    public static readonly DependencyProperty OverlayPaneNodeProperty =
-        DependencyProperty.Register(
-            nameof(OverlayPaneNode),
-            typeof(PaneContentNode),
-            typeof(DockingPaneViewModel),
-            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArrange | FrameworkPropertyMetadataOptions.AffectsRender));
-
-    public PaneContentNode? OverlayPaneNode
+    partial void OnBottomOverlayPaneNodeChanged(PaneContentNode? value)
     {
-        get => (PaneContentNode?)GetValue(OverlayPaneNodeProperty);
-        set => SetValue(OverlayPaneNodeProperty, value); // 💡 これでWPFの最深部メモリに直接データが書き込まれます！
+        value.Parent = _bottomOverlayPaneNode;
     }
+
+
 
     static DockingPaneViewModel()
     {
@@ -207,13 +210,34 @@ public partial class DockingPaneViewModel : Control
             new FrameworkPropertyMetadata(typeof(DockingPaneViewModel)));
     }
 
+    private void SetupRootCollection(IPaneNode nd)
+    {
+        nd.PropertyChanged += (s, e) =>
+        {
+            if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add && e.NewItems != null)
+            {
+                foreach (Node node in e.NewItems)
+                {
+                    Node.AttachContext(node, _context);
+
+                    // ルート直下に追加されたので、新しい親は null（またはRoot自身）として報告
+                    _context.Messenger.Send(new NodeDroppedMessage(node, null));
+                }
+            }
+        };
+    }
+
+
+
     public DockingPaneViewModel(IPaneNode rootDocument)
     {
-        rootDocument.RootVM = this;
 
         RootDocumentNode = rootDocument;
 
-
+        _context.Messenger.Register<DockingPaneViewModel, ChangeOverlay>(this, (recipient, message) =>
+        {
+            recipient.OnNodeDropped(message.TargetNode, message.NewParentNode);
+        });
         //this.DataContext = this;
     }
 
@@ -258,26 +282,81 @@ public partial class DockingPaneViewModel : Control
 
     }
 
-
-    [RelayCommand]
-    private void ToggleOverlay(object parameter)
+    public void Refresh()
     {
-        if (parameter is PaneContentNode clickedNode)
-        {
-            OverlayPaneNode = clickedNode;
+        RefreshSub(TopToolRoot);
+        RefreshSub(BottomToolRoot);
+        RefreshSub(LeftToolRoot);
+        RefreshSub(RightToolRoot);
+    }
 
-            if (OverlayPaneNode.IsAutoHidden  == true)
-            {
-                OverlayPaneNode.IsAutoHidden = false;
-                System.Diagnostics.Debug.WriteLine("[AutoHidden] ポップアップを閉じました。");
-            }
-            else
-            {
-                OverlayPaneNode.IsAutoHidden = true;
-                System.Diagnostics.Debug.WriteLine($"[AutoHidden] ポップアップを一時展開しました: {clickedNode.SelectedTab?.Title}");
-            }
+    void RefreshSub(IPaneNode nd )
+    {
+        if (nd == null) return;
+
+        if(nd.MainChild != null )
+        {
+            RefreshSub(nd.MainChild);
+        }
+
+        if (nd.SubChild != null)
+        {
+            RefreshSub(nd.SubChild);
         }
     }
+
+
+
+    public void ChangeOverlay(PaneContentNode node)
+    {
+        switch (node.ToolPainPosition)
+        {
+            case EnumToolPainPosition.Right:
+
+                RightOverlayPaneNode = node;
+               
+                break;
+
+            case EnumToolPainPosition.Left:
+                LeftOverlayPaneNode = node;
+
+                break;
+
+            case EnumToolPainPosition.Top:
+                TopOverlayPaneNode = node;
+
+
+                break;
+
+            case EnumToolPainPosition.Bottom:
+                BottomOverlayPaneNode = node;
+
+                break;
+
+        }
+
+
+    }
+
+    //[RelayCommand]
+    //private void ToggleOverlay(object parameter)
+    //{
+    //    if (parameter is PaneContentNode clickedNode)
+    //    {
+    //        OverlayPaneNode = clickedNode;
+
+    //        if (OverlayPaneNode.IsAutoHidden  == true)
+    //        {
+    //            OverlayPaneNode.IsAutoHidden = false;
+    //            System.Diagnostics.Debug.WriteLine("[AutoHidden] ポップアップを閉じました。");
+    //        }
+    //        else
+    //        {
+    //            OverlayPaneNode.IsAutoHidden = true;
+    //            System.Diagnostics.Debug.WriteLine($"[AutoHidden] ポップアップを一時展開しました: {clickedNode.SelectedTab?.Title}");
+    //        }
+    //    }
+    //}
 
 
 
@@ -350,6 +429,9 @@ public partial class DockingPaneViewModel : Control
             case EnumToolPainPosition.Bottom:
 
                 BottomHiddenPanes.Add(node);
+
+                
+
                 this.PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(BottomHiddenPanes)));
                 break;
 
@@ -579,3 +661,5 @@ public partial class DockingPaneViewModel : Control
     }
 
 }
+
+ 

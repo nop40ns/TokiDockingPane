@@ -1,9 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using TokiDockingPane.Interfaces;
+using TokiDockingPane.Messages;
 using TokiDockingPane.ViewModels;
 
 namespace TokiDockingPane.Models;
@@ -25,11 +27,31 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     [ObservableProperty]
     private IPaneNode? _mainChild; // Verticalなら「左」、Horizontalなら「上」
 
+    partial void OnMainChildChanged(IPaneNode? value)
+    {
+        if (value == null) return;
+        
+        value.Parent = this;
+
+        //var v = value;
+        //while (v.Parent != null)
+        //{
+        //    v = v.Parent;
+        //}
+        //value.RootVM = v.RootVM;
+    }
+
     [ObservableProperty]
     private IPaneNode? _subChild;  // Verticalなら「右」、Horizontalなら「下」
+    partial void OnSubChildChanged(IPaneNode? value)
+    {
+        if (value == null) return;
+            value.Parent = this;
+    }
 
-    public DockingPaneViewModel RootVM { get; set; }
 
+
+ 
 
     [ObservableProperty]
     private EnumOrientation _orientation;
@@ -52,7 +74,13 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     [ObservableProperty]
     EnumToolPainPosition _toolPainPosition = EnumToolPainPosition.None;
 
+    internal TreeContext? Context { get; set; }
 
+
+    // 各タブの実体データ（ViewModelポインタ）を保持するリスト
+    // ※ 1バイト管理思想に基づき、初期化時に一定数をプールするアプローチも可能
+    [ObservableProperty]
+    private List<TabViewModel> _tabViewModels = new();
 
     [ObservableProperty]
     private bool _isPinned = true;
@@ -71,9 +99,18 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
     partial void OnIsAutoHiddenChanged(bool oldValue, bool newValue)
     {
+        Debug.WriteLine($"--------------");
         Debug.WriteLine($"IsPinned:{IsPinned}");
 
         Debug.WriteLine($"IsAutoHidden:{IsAutoHidden}");
+
+        IPaneNode r = this;
+        while (r.RootVM== null)
+        {
+            r = r.Parent;
+        }
+
+        r.RootVM.ChangeOverlay(this);
     }
 
   
@@ -81,6 +118,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     [RelayCommand]
     private void TogglePin(object parameter)
     {
+        RemoveMe();
         // 📌 自分の部屋のピン留め状態をパチパチと反転させる
         this.IsPinned = !this.IsPinned;
         this.IsAutoHidden = !this.IsPinned; // ピンが外れたら即座に自動隠蔽対象にする
@@ -97,13 +135,12 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
         // 🌲 ツリーの真の最上位（Root）まで一気に遡る
         IPaneNode? root = this;
-        while (root?.Parent != null) root = root.Parent;
+    //    while (root?.Parent != null) root = root.Parent;
 
-        RemoveMe();
 
 
         // 画面全体の再描画（DataTriggerの即時適用）をWPFへ強烈に通知！
-        root?.RaisePropertyChanged(string.Empty);
+    //    root?.RaisePropertyChanged(string.Empty);
     }
 
 
@@ -118,11 +155,6 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
     
 
-
-    // 各タブの実体データ（ViewModelポインタ）を保持するリスト
-    // ※ 1バイト管理思想に基づき、初期化時に一定数をプールするアプローチも可能
-    [ObservableProperty]
-    private List<TabViewModel> _tabViewModels = new();
 
 
     /// <summary>
@@ -349,6 +381,14 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
                 // 親コンテナ側の通知を撃ち、Gridを詰め直させる
                 currentParent.RaisePropertyChanged(string.Empty);
             }
+        }
+        else
+        {
+
+            //var newList = new List<TabViewModel>(_tabViewModels);
+            //newList.RemoveAt(this.SelectedTabIndex);
+            //TabViewModels = newList; 
+
         }
     }
         /// <summary>

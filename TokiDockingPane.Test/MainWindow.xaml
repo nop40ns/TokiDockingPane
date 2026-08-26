@@ -33,6 +33,8 @@
         <viewModels:DockingPaneViewModel 
             RootDocumentNode="{Binding RootDocumentNode}"  
             RightToolRoot ="{Binding RightToolRoot}"
+            LeftToolRoot ="{Binding LeftToolRoot}"
+            TopToolRoot="{Binding TopToolRoot}"
             BottomToolRoot="{Binding BottomToolRoot}"
             />
     </Grid>
