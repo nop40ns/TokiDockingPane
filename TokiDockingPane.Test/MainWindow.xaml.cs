@@ -93,29 +93,31 @@ public partial class MainWindow : Window
 
 
         solutionExplorerNode.MainChild = t0;
-        solutionExplorerNode.SubChild = t1; 
+        solutionExplorerNode.SubChild = t1;
 
         // 🎯 5. 頂点ノードだけを ViewModel に渡して DataContext に直結
-        var mainVM = new DockingPaneViewModel(rootDocument );
-        
-        mainVM.BottomToolRoot = solutionExplorerNode;
-        mainVM.BottomToolRoot.ToolPainPosition = EnumToolPainPosition.Bottom;
+        // var mainVM = new DockingPaneViewModel(rootDocument );
+        DP.RootDocumentNode = rootDocument;
 
 
-        mainVM.RightToolRoot = t2;
-        mainVM.RightToolRoot.ToolPainPosition = EnumToolPainPosition.Right;
+        DP.BottomToolRoot = solutionExplorerNode;
+        DP.BottomToolRoot.ToolPainPosition = EnumToolPainPosition.Bottom;
+
+
+        DP.RightToolRoot = t2;
+        DP.RightToolRoot.ToolPainPosition = EnumToolPainPosition.Right;
 
         t3.ID = "t3";
-        mainVM.LeftToolRoot = t3;
-        mainVM.LeftToolRoot.ToolPainPosition = EnumToolPainPosition.Left;
+        DP.LeftToolRoot = t3;
+        DP.LeftToolRoot.ToolPainPosition = EnumToolPainPosition.Left;
 
 
-        mainVM.TopToolRoot = t4;
-        mainVM.TopToolRoot.ToolPainPosition = EnumToolPainPosition.Top;
+        DP.TopToolRoot = t4;
+        DP.TopToolRoot.ToolPainPosition = EnumToolPainPosition.Top;
 
-        mainVM.Refresh();
+        DP.Refresh();
 
-        this.DataContext = mainVM;
+      //  this.DataContext = mainVM;
 
     }
 

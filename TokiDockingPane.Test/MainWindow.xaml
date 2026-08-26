@@ -30,12 +30,10 @@
     <!-- ライブラリ側（assembly=TokiDockingPane）のカスタムコントロールタグとして直接ここにカチッと直結します。 -->
     <!-- これにより、WPFは Generic.xaml 内部の「5列のVS風設計図（Style）」を一瞬で100%確定解決し、即時ロードします！ -->
     <Grid>
-        <viewModels:DockingPaneViewModel 
-            RootDocumentNode="{Binding RootDocumentNode}"  
-            RightToolRoot ="{Binding RightToolRoot}"
-            LeftToolRoot ="{Binding LeftToolRoot}"
-            TopToolRoot="{Binding TopToolRoot}"
-            BottomToolRoot="{Binding BottomToolRoot}"
+        <viewModels:DockingPaneViewModel x:Name="DP" 
             />
+        
+        
+        
     </Grid>
 </Window>

@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System;
+using CommunityToolkit.Mvvm.Messaging;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -74,7 +74,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     [ObservableProperty]
     EnumToolPainPosition _toolPainPosition = EnumToolPainPosition.None;
 
-    internal TreeContext? Context { get; set; }
+    internal TreeContext? _context { get; set; }
 
 
     // 各タブの実体データ（ViewModelポインタ）を保持するリスト
@@ -104,16 +104,20 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
         Debug.WriteLine($"IsAutoHidden:{IsAutoHidden}");
 
-        IPaneNode r = this;
-        while (r.RootVM== null)
-        {
-            r = r.Parent;
-        }
+        _context ?.Messenger.Send(new AutoHiddenChangedMessage(this, newValue));
+        Debug.WriteLine(_context.GetHashCode());
 
-        r.RootVM.ChangeOverlay(this);
+        //@@@@@@@@@
+        //IPaneNode r = this;
+        //while (r.RootVM== null)
+        //{
+        //    r = r.Parent;
+        //}
+
+        //r.RootVM.ChangeOverlay(this);
     }
 
-  
+
 
     [RelayCommand]
     private void TogglePin(object parameter)

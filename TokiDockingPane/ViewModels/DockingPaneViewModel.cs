@@ -3,10 +3,11 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Xml.Linq;
+using CommunityToolkit.Mvvm.Messaging;
 using TokiDockingPane.Interfaces;
 using TokiDockingPane.Messages;
 using TokiDockingPane.Models;
+using System.Diagnostics;
 
 namespace TokiDockingPane.ViewModels;
 
@@ -23,104 +24,107 @@ namespace TokiDockingPane.ViewModels;
 [ObservableObject]
 public partial class DockingPaneViewModel : Control
 {
-    public static readonly DependencyProperty RootDocumentNodeProperty =
-        DependencyProperty.Register(nameof(RootDocumentNode), typeof(IPaneNode), typeof(DockingPaneViewModel), new PropertyMetadata(null));
-
-    // 👉 右エリアツールルート (💡 修正点②：XAML直結のためDependencyPropertyへ昇華)
-    // 👉 右エリアツールルート
-    public static readonly DependencyProperty RightToolRootProperty =
-        DependencyProperty.Register(
-            nameof(RightToolRoot),
-            typeof(IPaneNode),
-            typeof(DockingPaneViewModel),
-            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArrange | FrameworkPropertyMetadataOptions.AffectsRender, OnToolRootChanged));
-
-    // 👈 左エリアツールルート
-    public static readonly DependencyProperty LeftToolRootProperty =
-        DependencyProperty.Register(
-            nameof(LeftToolRoot), 
-            typeof(IPaneNode), 
-            typeof(DockingPaneViewModel),
-            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArrange | FrameworkPropertyMetadataOptions.AffectsRender, OnToolRootChanged));
-
-    // 👆 上エリアツールルート
-    public static readonly DependencyProperty TopToolRootProperty =
-        DependencyProperty.Register(nameof(TopToolRoot), typeof(IPaneNode), typeof(DockingPaneViewModel),
-            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArrange | FrameworkPropertyMetadataOptions.AffectsRender, OnToolRootChanged));
-
-    // 👇 下エリアツールルート
-    public static readonly DependencyProperty BottomToolRootProperty =
-        DependencyProperty.Register(nameof(BottomToolRoot), typeof(IPaneNode), typeof(DockingPaneViewModel),
-            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArrange | FrameworkPropertyMetadataOptions.AffectsRender, OnToolRootChanged));
+ 
 
 
-    // 🎯【超重要・変更通知の中継イベント】
-    // 💡 値がnullからオブジェクトに変わったまさにその瞬間に、WPFへ「サイドバーのリスト（RightHiddenPanesなど）も全部まとめて再計算して！」と連動命令を飛ばします
-    private static void OnToolRootChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-        if (d is DockingPaneViewModel vm)
-        {
-            // 4辺のAutoHiddenサイドバーの通信線をパチパチと一斉に叩き起こします
-            vm.RefreshHiddenPanes();
-        }
-    }
-
-
+#region HiddenPanes
 
     [ObservableProperty]
     private ObservableCollection<PaneContentNode> _RightHiddenPanes = new();
 
+    private static void OnRightHiddenPanesChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is DockingPaneViewModel vm && e.NewValue is IPaneNode newNode)
+        {
+            newNode.ToolPainPosition = EnumToolPainPosition.Right;
+            vm.SetToolPainPosition(newNode);
+            vm.AttachContextToTree(newNode, vm._context);
+        }
+    }
+
     [ObservableProperty]
     private ObservableCollection<PaneContentNode> _LeftHiddenPanes = new();
+
+    private static void OnLeftHiddenPanesChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is DockingPaneViewModel vm && e.NewValue is IPaneNode newNode)
+        {
+            newNode.ToolPainPosition = EnumToolPainPosition.Left;
+            vm.SetToolPainPosition(newNode);
+            vm.AttachContextToTree(newNode, vm._context);
+        }
+    }
 
     [ObservableProperty]
     private ObservableCollection<PaneContentNode> _TopHiddenPanes = new();
 
+    private static void OnTopHiddenPanesChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is DockingPaneViewModel vm && e.NewValue is IPaneNode newNode)
+        {
+            newNode.ToolPainPosition = EnumToolPainPosition.Top;
+            vm.SetToolPainPosition(newNode);
+            vm.AttachContextToTree(newNode, vm._context);
+        }
+    }
+
     [ObservableProperty]
     private ObservableCollection<PaneContentNode> _BottomHiddenPanes = new();
+    private static void OnBottomHiddenPanesChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is DockingPaneViewModel vm && e.NewValue is IPaneNode newNode)
+        {
+            newNode.ToolPainPosition = EnumToolPainPosition.Bottom;
+            vm.SetToolPainPosition(newNode);
+            vm.AttachContextToTree(newNode, vm._context);
+        }
+    }
 
 
+    #endregion
+     
+    public static readonly DependencyProperty RootDocumentNodeProperty =
+    DependencyProperty.Register(nameof(RootDocumentNode), typeof(IPaneNode), typeof(DockingPaneViewModel),
+        new PropertyMetadata(null, OnToolRootChanged));
 
-
-
-
-    TreeContext? _context { get; set; }
-
-    // XAML側の最外殻パーツを一本釣りするためのプライベートポインタ
-    private Grid? _indicatorOuter;
-    private Border? _outerTop;
-    private Border? _outerRight;
-    private Border? _outerBottom;
-    private Border? _outerLeft;
 
     public IPaneNode RootDocumentNode
     {
         get => (IPaneNode)GetValue(RootDocumentNodeProperty);
-        set  
-        {
-
-            value.ToolPainPosition = EnumToolPainPosition.None;
-
-            SetToolPainPosition(value);
-
-            SetValue(RootDocumentNodeProperty, value);
-        }
+        set =>  SetValue(RootDocumentNodeProperty, value);  
     }
 
-    public IPaneNode? RightToolRoot
-    {
-        get => (IPaneNode?)GetValue(RightToolRootProperty);
-        set 
-        {
-            value.ToolPainPosition = EnumToolPainPosition.Right;
+    #region RootDocument
 
-            SetToolPainPosition(value);
+    // --- 依存関係プロパティの定義（すべて同じコールバックを指定） ---
+
+    public static readonly DependencyProperty LeftToolRootProperty =
+        DependencyProperty.Register(nameof(LeftToolRoot), typeof(IPaneNode), typeof(DockingPaneViewModel),
+            new PropertyMetadata(null, OnToolRootChanged));
+
+    public static readonly DependencyProperty RightToolRootProperty =
+        DependencyProperty.Register(nameof(RightToolRoot), typeof(IPaneNode), typeof(DockingPaneViewModel),
+            new PropertyMetadata(null, OnToolRootChanged));
+
+    public static readonly DependencyProperty TopToolRootProperty =
+        DependencyProperty.Register(nameof(TopToolRoot), typeof(IPaneNode), typeof(DockingPaneViewModel),
+            new PropertyMetadata(null, OnToolRootChanged));
+
+    public static readonly DependencyProperty BottomToolRootProperty =
+        DependencyProperty.Register(nameof(BottomToolRoot), typeof(IPaneNode), typeof(DockingPaneViewModel),
+            new PropertyMetadata(null, OnToolRootChanged));
 
 
-            SetValue(RightToolRootProperty, value);
-        }
-    }
+    // --- 各プロパティのラッパー ---
+    public IPaneNode? LeftToolRoot { get => (IPaneNode?)GetValue(LeftToolRootProperty); set => SetValue(LeftToolRootProperty, value); }
+    public IPaneNode? RightToolRoot { get => (IPaneNode?)GetValue(RightToolRootProperty); set => SetValue(RightToolRootProperty, value); }
+    public IPaneNode? TopToolRoot { get => (IPaneNode?)GetValue(TopToolRootProperty); set => SetValue(TopToolRootProperty, value); }
+    public IPaneNode? BottomToolRoot { get => (IPaneNode?)GetValue(BottomToolRootProperty); set => SetValue(BottomToolRootProperty, value); }
 
+
+    // 🎯 完全に共通化されたコールバックメソッド
+ 
+      
     void SetToolPainPosition(IPaneNode nd)
     {
         if (nd == null) return;
@@ -142,65 +146,85 @@ public partial class DockingPaneViewModel : Control
         }
     }
 
+    #endregion
 
-
-    public IPaneNode? LeftToolRoot
+    private static void OnToolRootChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        get => (IPaneNode?)GetValue(LeftToolRootProperty);
-        set
+        if (d is DockingPaneViewModel vm && e.NewValue is IPaneNode newNode)
         {
-            value.ToolPainPosition = EnumToolPainPosition.Left;
+            // 1. どのプロパティ（DependencyProperty）が変わったかに応じて位置を決定
+            EnumToolPainPosition position = e.Property switch
+            {
+                _ when e.Property == LeftToolRootProperty => EnumToolPainPosition.Left,
+                _ when e.Property == RightToolRootProperty => EnumToolPainPosition.Right,
+                _ when e.Property == TopToolRootProperty => EnumToolPainPosition.Top,
+                _ when e.Property == BottomToolRootProperty => EnumToolPainPosition.Bottom,
+                _ when e.Property == LeftOverlayPaneNodeProperty => EnumToolPainPosition.Left,
+                _ when e.Property == RightOverlayPaneNodeProperty => EnumToolPainPosition.Right,
+                _ when e.Property == TopOverlayPaneNodeProperty => EnumToolPainPosition.Top,
+                _ when e.Property == BottomOverlayPaneNodeProperty => EnumToolPainPosition.Bottom,
+                _ => EnumToolPainPosition.None // デフォルトや想定外の場合
+            };
 
-            SetToolPainPosition(value);
+            // 2. 決定した位置をノードに設定
+            newNode.ToolPainPosition = position;
 
-            SetValue(LeftToolRootProperty, value);
+            // 3. 共通ロジックの実行
+            vm.SetToolPainPosition(newNode);
+            vm.AttachContextToTree(newNode, vm._context);
+
+
+            Debug.WriteLine("Peopety");
+
+            Debug.WriteLine(vm.GetHashCode());
+
+            Debug.WriteLine(vm._context.GetHashCode());
         }
     }
 
-    public IPaneNode? TopToolRoot
-    {
-        get => (IPaneNode?)GetValue(TopToolRootProperty);
-        set
-        {
-            value.ToolPainPosition = EnumToolPainPosition.Top;
 
-            SetToolPainPosition(value);
 
-            SetValue(TopToolRootProperty, value);
-        }
-    }
+    #region OverlayPaneNode
 
-    public IPaneNode? BottomToolRoot
-    {
-        get => (IPaneNode?)GetValue(BottomToolRootProperty);
-        set
-        {
-            value.ToolPainPosition = EnumToolPainPosition.Bottom;
+    public IPaneNode? LeftOverlayPaneNode { get => (IPaneNode?)GetValue(LeftOverlayPaneNodeProperty); set => SetValue(LeftOverlayPaneNodeProperty, value); }
+    public IPaneNode? RightOverlayPaneNode { get => (IPaneNode?)GetValue(RightOverlayPaneNodeProperty); set => SetValue(RightOverlayPaneNodeProperty, value); }
+    public IPaneNode? TopOverlayPaneNode { get => (IPaneNode?)GetValue(TopOverlayPaneNodeProperty); set => SetValue(TopOverlayPaneNodeProperty, value); }
+    public IPaneNode? BottomOverlayPaneNode { get => (IPaneNode?)GetValue(BottomOverlayPaneNodeProperty); set => SetValue(BottomOverlayPaneNodeProperty, value); }
 
-            SetToolPainPosition(value);
+    public static readonly DependencyProperty LeftOverlayPaneNodeProperty =
+        DependencyProperty.Register(nameof(LeftOverlayPaneNode), typeof(IPaneNode), typeof(DockingPaneViewModel),
+            new PropertyMetadata(null, OnToolRootChanged));
 
-            SetValue(BottomToolRootProperty, value);
-        }
-    }
+    public static readonly DependencyProperty RightOverlayPaneNodeProperty =
+        DependencyProperty.Register(nameof(RightOverlayPaneNode), typeof(IPaneNode), typeof(DockingPaneViewModel),
+            new PropertyMetadata(null, OnToolRootChanged));
+
+    public static readonly DependencyProperty TopOverlayPaneNodeProperty =
+        DependencyProperty.Register(nameof(TopOverlayPaneNode), typeof(IPaneNode), typeof(DockingPaneViewModel),
+        new PropertyMetadata(null, OnToolRootChanged));
+
+    public static readonly DependencyProperty BottomOverlayPaneNodeProperty =
+        DependencyProperty.Register(nameof(BottomOverlayPaneNode), typeof(IPaneNode), typeof(DockingPaneViewModel),
+            new PropertyMetadata(null, OnToolRootChanged));
+
+ 
      
+    #endregion
 
-    [ObservableProperty]
-    private PaneContentNode? _leftOverlayPaneNode;
+    //partial void OnBottomOverlayPaneNodeChanged(PaneContentNode? value)
+    //{
+    //    value.Parent = _bottomOverlayPaneNode;
+    //}
 
-    [ObservableProperty]
-    private PaneContentNode? _rightOverlayPaneNode;
 
-    [ObservableProperty]
-    private PaneContentNode? _topOverlayPaneNode;
+    TreeContext? _context { get; set; } = new();
 
-    [ObservableProperty]
-    private PaneContentNode? _bottomOverlayPaneNode;
-
-    partial void OnBottomOverlayPaneNodeChanged(PaneContentNode? value)
-    {
-        value.Parent = _bottomOverlayPaneNode;
-    }
-
+    // XAML側の最外殻パーツを一本釣りするためのプライベートポインタ
+    private Grid? _indicatorOuter;
+    private Border? _outerTop;
+    private Border? _outerRight;
+    private Border? _outerBottom;
+    private Border? _outerLeft;
 
 
     static DockingPaneViewModel()
@@ -210,39 +234,56 @@ public partial class DockingPaneViewModel : Control
             new FrameworkPropertyMetadata(typeof(DockingPaneViewModel)));
     }
 
-    private void SetupRootCollection(IPaneNode nd)
+     
+
+
+    void AttachContextToTree(IPaneNode? node, TreeContext context)
     {
-        nd.PropertyChanged += (s, e) =>
+        // 1. nullチェック（ガード節）
+        if (node == null) return;
+
+        // 2. インターフェース（IPaneNode）から具象クラス（PaneContentNode）へ安全にキャスト
+        if (node is PaneContentNode contentNode)
         {
-            if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add && e.NewItems != null)
-            {
-                foreach (Node node in e.NewItems)
-                {
-                    Node.AttachContext(node, _context);
+            // 具象クラスが持つ internal な Context プロパティに、世界に1つのインスタンスをセット
+            contentNode._context = context;
+        }
 
-                    // ルート直下に追加されたので、新しい親は null（またはRoot自身）として報告
-                    _context.Messenger.Send(new NodeDroppedMessage(node, null));
-                }
-            }
-        };
+        // 3. 【最重要】再帰駆動（バケツリレー）
+        // 左（上）の子ノードとその子孫すべてに context を配る
+        AttachContextToTree(node.MainChild, context);
+
+        // 右（下）の子ノードとその子孫すべてに context を配る
+        AttachContextToTree(node.SubChild, context);
     }
-
-
 
     public DockingPaneViewModel(IPaneNode rootDocument)
     {
 
+
+        Debug.WriteLine( "引数付き");
+
+        Debug.WriteLine(this.GetHashCode());
+
+        Debug.WriteLine(_context.GetHashCode());
+
         RootDocumentNode = rootDocument;
 
-        _context.Messenger.Register<DockingPaneViewModel, ChangeOverlay>(this, (recipient, message) =>
-        {
-            recipient.OnNodeDropped(message.TargetNode, message.NewParentNode);
-        });
-        //this.DataContext = this;
+     
     }
 
     public DockingPaneViewModel()
     {
+
+        _context.Messenger.Register<AutoHiddenChangedMessage>(this, (recipient, message) =>
+        {
+            if (recipient is DockingPaneViewModel vm)
+            {
+                // 安全にUIスレッド（または同期処理）で実行
+                vm.ChangeOverlay(message.TargetNode);
+            }
+        });
+
         // ★【最外殻D&Dインフラの起動】：
         // 自分自身（画面全体）に対してもWPFのD&D受け入れシグナルを直結します
         this.AllowDrop = true;
@@ -252,11 +293,11 @@ public partial class DockingPaneViewModel : Control
         this.Drop += OnOuterDrop;
         this.PreviewMouseDown += OnPreviewMouseDown;
 
+        Debug.WriteLine("引数なし");
 
+        Debug.WriteLine(this.GetHashCode());
 
-
-
-
+        Debug.WriteLine(_context.GetHashCode());
         //this.DataContext = this;
     }
     public override void OnApplyTemplate()
