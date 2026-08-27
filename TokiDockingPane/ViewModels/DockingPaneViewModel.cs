@@ -192,10 +192,51 @@ public partial class DockingPaneViewModel : Control
         }
    
     }
-    
 
 
 
+    //************************
+
+
+    bool _IsLeftContent = true;
+    public bool IsLeftContent
+    {
+        get
+        {
+            if (LeftToolRoot is null) return false;
+            return _IsLeftContent;
+        }
+        set
+        {
+            _IsLeftContent = value;
+        }
+    }
+
+    bool _IsLeftAutoHiddenHedder = false;
+    public bool IsLeftAutoHiddenHedder
+    {
+        get
+        {
+            if (LeftToolRoot is null) return false;
+            return _IsLeftAutoHiddenHedder;
+        }
+        set
+        {
+            _IsLeftAutoHiddenHedder = value;
+        }
+    }
+
+    bool _IsLeftOverlayPaneNode = false;
+    public bool IsLeftOverlayPaneNode
+    {
+        get
+        {
+            if (LeftToolRoot is null) return false;
+            if (IsLeftAutoHiddenHedder == false) return false;
+            return LeftOverlayPaneNode.IsAutoHidden;
+        }
+
+    }
 
 
 
@@ -253,6 +294,11 @@ public partial class DockingPaneViewModel : Control
 
                 // 💡 ここで深い階層（MainChildやSubChild）まで完璧に共通Contextをバケツリレーする
                 vm.AttachContextToTree(newNode, vm._context);
+
+
+                Debug.WriteLine($"{newNode.ID}:{newNode.GetHashCode()}");
+
+
             }
 
             // 3. 💡 追加の対策：WPFにビジュアルツリーの更新とリレイアウトを強制コマンドで叩き込む
@@ -261,9 +307,11 @@ public partial class DockingPaneViewModel : Control
 
             Debug.WriteLine("Peopety");
 
-            Debug.WriteLine(vm.GetHashCode());
 
-            Debug.WriteLine(vm._context.GetHashCode());
+            //Debug.WriteLine($"{vm.GetHashCode()}");
+
+
+            //Debug.WriteLine(vm._context.GetHashCode());
         }
     }
 
@@ -496,6 +544,7 @@ public partial class DockingPaneViewModel : Control
 
             case EnumToolPainPosition.Left:
                 LeftOverlayPaneNode = node;
+                this.PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsLeftOverlayPaneNode)));
 
                 break;
 
@@ -597,8 +646,16 @@ public partial class DockingPaneViewModel : Control
 
             case EnumToolPainPosition.Left:
 
+                IsLeftAutoHiddenHedder = true;
+                //  IsRightOverlayPaneNode = false;
+                IsLeftContent = false;
+
                 LeftHiddenPanes.Add(node);
+
                 this.PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(LeftHiddenPanes)));
+                this.PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsLeftAutoHiddenHedder)));
+                this.PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsLeftOverlayPaneNode)));
+                this.PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsLeftContent)));
 
                 break;
 

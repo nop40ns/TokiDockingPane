@@ -105,7 +105,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         Debug.WriteLine($"IsAutoHidden:{IsAutoHidden}");
 
         _context ?.Messenger.Send(new AutoHiddenChangedMessage(this, newValue));
-        Debug.WriteLine(_context.GetHashCode());
+        Debug.WriteLine($"{ID}:{_context.GetHashCode()}");
 
         //@@@@@@@@@
         //IPaneNode r = this;

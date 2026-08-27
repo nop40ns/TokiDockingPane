@@ -294,7 +294,7 @@
 
 
                         <!--  👈 左隠しエリア  -->
-                        <Grid
+                        <Grid x:Name="PART_LeftOverlayPaneNode"
                             Grid.Row="3"
                             Grid.Column="1"
                             Grid.ColumnSpan="3"
@@ -305,11 +305,9 @@
                                 <Style TargetType="Grid">
                                     <Setter Property="Visibility" Value="Collapsed" />
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding LeftOverlayPaneNode.IsPinned}" Value="false">
+                                        <DataTrigger Binding="{Binding IsLeftOverlayPaneNode,RelativeSource={RelativeSource TemplatedParent}}" Value="True">
                                             <Setter Property="Visibility" Value="Visible" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding LeftOverlayPaneNode.IsAutoHidden}" Value="True">
-                                            <Setter Property="Visibility" Value="Collapsed" />
+
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
