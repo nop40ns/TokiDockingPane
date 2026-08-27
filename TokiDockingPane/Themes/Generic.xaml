@@ -6,6 +6,7 @@
     xmlns:models="clr-namespace:TokiDockingPane.Models"
     xmlns:sysDiag="clr-namespace:System.Diagnostics;assembly=WindowsBase"
     xmlns:uc="clr-namespace:TokiDockingPane.UserControls"
+    xmlns:Interfaces="clr-namespace:TokiDockingPane.Interfaces"
     xmlns:viewModels="clr-namespace:TokiDockingPane.ViewModels">
 
     <conv:DoubleToGridLengthConverter x:Key="DoubleToGridLengthConverter" />
@@ -465,10 +466,10 @@
                             Panel.ZIndex="50000">
                             <Grid.Style>
                                 <Style TargetType="Grid">
-                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Setter Property="Visibility" Value="Visible" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsRightOverlayPaneNode,RelativeSource={RelativeSource TemplatedParent}}" Value="True">
-                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Setter Property="Visibility" Value="Collapsed" />
 
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -488,20 +489,21 @@
                                 Background="#FF3E3E42"
                                 />
 
-                            <TextBlock Text="hogehoe"   Foreground="Wheat"                               Grid.Column="2"
+                            <!--<TextBlock Text="hogehoe"   Foreground="Wheat"          Background="Transparent"                     Grid.Column="2"
 >
                                 
-                            </TextBlock>
+                            </TextBlock>-->
 
 
-                            <ContentPresenter
+                            <ContentPresenter  
                                 x:Name="PART_RightOverlayContent"
                                 Grid.Column="2"
+                                Grid.ColumnSpan="3"
                                 Panel.ZIndex="150000"
-                                Content="{Binding RightOverlayPaneNode}">
+    Content="{TemplateBinding RightOverlayPaneNode}"> 
 
                                 <ContentPresenter.ContentTemplate >
-                                    <DataTemplate DataType="{x:Type models:PaneContentNode}">
+                                    <DataTemplate DataType="{x:Type Interfaces:IPaneNode}">
                                         <local:DockingPane Content="{Binding}" DataContext="{Binding}" />
                                     </DataTemplate>
                                 </ContentPresenter.ContentTemplate>
