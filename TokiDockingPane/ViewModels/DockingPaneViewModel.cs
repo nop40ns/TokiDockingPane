@@ -55,9 +55,15 @@ public partial class DockingSideContext : DependencyObject
             newNode.Context = Context;
 
         }
-
-        if( e.Property.Name == nameof(OverlayPaneNode) || e.Property.Name == nameof(IsHiddnVisible) )
+        if ( e.Property.Name == nameof(IsHiddnVisible))
         {
+
+        }
+
+        if ( e.Property.Name == nameof(OverlayPaneNode)  )
+        {
+            Debug.WriteLine($"OverlayPaneNode.IsAutoHidden:{OverlayPaneNode.IsAutoHidden }");
+
             UpdateIsContentVisible();
 
         }
@@ -66,6 +72,7 @@ public partial class DockingSideContext : DependencyObject
 
     private void OnIsHiddnVisibleChanged(bool newValue)
     {
+        Debug.WriteLine($"OverlayPaneNode:{OverlayPaneNode}");
         Debug.WriteLine($"IsHiddnVisible:{IsHiddnVisible}");
     }
 
@@ -153,7 +160,7 @@ public partial class DockingSideContext : DependencyObject
 
             //if(IsHiddnVisible == overlay.IsPinned)
             //    IsHiddnVisible = overlay.IsPinned==false ;
-            IsContentVisible = true;
+            //IsContentVisible = true;
             return;
         }
   //      IsContentVisible = true;

@@ -102,6 +102,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     partial void OnIsPinnedChanged(bool oldValue, bool newValue)
     {
         //Debug.WriteLine($"IsPinned:{IsPinned}");
+        IsAutoHidden = true;
     }
 
     [ObservableProperty]

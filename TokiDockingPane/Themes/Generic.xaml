@@ -60,8 +60,10 @@
                                 Width="Auto"
                                 MinWidth="0" />
 
+
                             <!--  2: 左セパレータ用通路  -->
-                            <ColumnDefinition Width="auto" />
+                            <ColumnDefinition Width="auto"/>
+
 
                             <!--  3: ★中央メイン領域  -->
                             <ColumnDefinition Width="*" MinWidth="200" />
@@ -276,7 +278,7 @@
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
                             Background="#FF3E3E42"
-                            Visibility="Visible">
+                             >
 
                             <GridSplitter.Style>
                                 <Style TargetType="GridSplitter">
@@ -310,7 +312,7 @@
                                 <Style TargetType="Grid">
                                     <Setter Property="Visibility" Value="Collapsed" />
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding LeftToolPain.IsHiddnVisible, RelativeSource={RelativeSource TemplatedParent}}" Value="true">
+                                        <DataTrigger Binding="{Binding LeftToolPain.OverlayPaneNode.IsAutoHidden , RelativeSource={RelativeSource TemplatedParent}}" Value="false">
                                             <Setter Property="Visibility" Value="Visible" />
 
                                         </DataTrigger>
@@ -334,6 +336,7 @@
                                
                             </GridSplitter>
 
+                            <!--<TextBlock Grid.Column="0" Background="Red"/>-->
                             <ContentPresenter
                                 x:Name="PART_LeftOverlayContent"
                                 Grid.Column="0"
