@@ -101,7 +101,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
     partial void OnIsPinnedChanged(bool oldValue, bool newValue)
     {
-        Debug.WriteLine($"IsPinned:{IsPinned}");
+        //Debug.WriteLine($"IsPinned:{IsPinned}");
     }
 
     [ObservableProperty]
@@ -116,13 +116,15 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
     partial void OnIsAutoHiddenChanged(bool oldValue, bool newValue)
     {
-        Debug.WriteLine($"--------------");
-        Debug.WriteLine($"IsPinned:{IsPinned}");
+        //Debug.WriteLine($"--------------");
+        //Debug.WriteLine($"IsPinned:{IsPinned}");
 
-        Debug.WriteLine($"IsAutoHidden:{IsAutoHidden}");
+        //Debug.WriteLine($"IsAutoHidden:{IsAutoHidden}");
 
         Context ?.Messenger.Send(new AutoHiddenChangedMessage(this, newValue));
-        Debug.WriteLine($"{ID}:{Context.GetHashCode()}");
+
+
+        //Debug.WriteLine($"{ID}:{Context.GetHashCode()}");
 
         //@@@@@@@@@
         //IPaneNode r = this;

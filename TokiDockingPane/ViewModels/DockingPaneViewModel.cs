@@ -47,7 +47,7 @@ public partial class DockingSideContext : DependencyObject
     {
         base.OnPropertyChanged(e);
 
-        Debug.WriteLine($"{e.Property.Name}:{Position}" );
+        //Debug.WriteLine($"{e.Property.Name}:{Position}" );
 
         if (e.NewValue is IPaneNode newNode)
         {
@@ -64,11 +64,9 @@ public partial class DockingSideContext : DependencyObject
 
     }
 
-    private static void OnIsHiddnVisibleChanged(
-    DockingSideContext side,
-    DependencyPropertyChangedEventArgs e)
+    private void OnIsHiddnVisibleChanged(bool newValue)
     {
-
+        Debug.WriteLine($"IsHiddnVisible:{IsHiddnVisible}");
     }
 
     // 💡 ここで変更イベントを直接処理！
@@ -151,11 +149,11 @@ public partial class DockingSideContext : DependencyObject
 
         if (OverlayPaneNode is IPaneNode overlay   )
         {
-            IsContentVisible = false;
- 
-            if(IsHiddnVisible == overlay.IsPinned)
-                IsHiddnVisible = overlay.IsPinned==false ;
-    
+            //IsContentVisible = false;
+
+            //if(IsHiddnVisible == overlay.IsPinned)
+            //    IsHiddnVisible = overlay.IsPinned==false ;
+            IsContentVisible = true;
             return;
         }
   //      IsContentVisible = true;
@@ -399,7 +397,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
             if (recipient is DockingPaneViewModel vm)
             {
                 // 安全にUIスレッド（または同期処理）で実行
-                vm.ChangeOverlay(message.TargetNode);
+                vm.ChangeOverlay(message.TargetNode,message.IsAutoHidden );
             }
         });
 
@@ -465,8 +463,8 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
 
 
 
-    public void ChangeOverlay(PaneContentNode node)
-    {
+    public void ChangeOverlay(PaneContentNode node , bool IsPinned)
+    { 
         switch (node.ToolPainPosition)
         {
             case EnumToolPainPosition.Right:
@@ -482,8 +480,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
 
                 LeftToolPain.OverlayPaneNode = node;
 
-        //        LeftToolPain.IsHiddnVisible = node.IsPinned;
-
+                LeftToolPain.IsHiddnVisible = IsPinned;
 
                 break;
 
