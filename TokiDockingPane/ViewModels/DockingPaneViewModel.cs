@@ -101,7 +101,7 @@ public partial class DockingPaneViewModel : Control
     // --- 依存関係プロパティの定義（すべて同じコールバックを指定） ---
 
     public static readonly DependencyProperty LeftToolRootProperty =
-    DependencyProperty.Register(nameof(LeftToolRoot), typeof(IPaneNode), typeof(DockingPaneViewModel),
+[DependencyProperty<DockingSideContext>("RightToolPain")]
         new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArrange | FrameworkPropertyMetadataOptions.AffectsRender, OnToolRootChanged));
 
     public static readonly DependencyProperty RightToolRootProperty =
