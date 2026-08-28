@@ -9,12 +9,12 @@ using TokiDockingPane.ViewModels;
 
 namespace TokiDockingPane.Messages
 {
-    internal class TreeContext
+    public class TreeContext
     {
         public IMessenger Messenger { get; } = new WeakReferenceMessenger();
     }
 
-    internal class AutoHiddenChangedMessage
+    public class AutoHiddenChangedMessage
     {
         // 状態が変わったノード自身
         public PaneContentNode TargetNode { get; }
@@ -28,9 +28,8 @@ namespace TokiDockingPane.Messages
             IsAutoHidden = isAutoHidden;
         }
     }
-
-    // 2. メッセージ自体も internal にする（DLL外からは見えない）
-    internal class ChangeOverlay
+     
+    public class ChangeOverlay
     {
         public PaneContentNode TargetNode;
 

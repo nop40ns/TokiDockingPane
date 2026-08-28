@@ -1,39 +1,38 @@
-﻿<Window x:Class="TokiDockingPane.Test.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-         xmlns:viewModels="clr-namespace:TokiDockingPane.ViewModels;assembly=TokiDockingPane" 
-        xmlns:UserControls="clr-namespace:TokiDockingPane.Test.UserControls"
-                xmlns:vm="clr-namespace:TokiDockingPane.Test.ViewModels"
-
-        
-        Title="MainWindow" Height="600" Width="1000"
-        
-        Background="#FF1E1E1E">
+﻿<Window
+    x:Class="TokiDockingPane.Test.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:UserControls="clr-namespace:TokiDockingPane.Test.UserControls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewModels="clr-namespace:TokiDockingPane.ViewModels;assembly=TokiDockingPane"
+    xmlns:vm="clr-namespace:TokiDockingPane.Test.ViewModels"
+    Title="MainWindow"
+    Width="1000"
+    Height="600"
+    Background="#FF1E1E1E">
     <Window.Resources>
-        <!-- 🔷 4画面（ファイル一覧用）：x:Key="TokiFileViewTemplate" と命名 -->
-        <DataTemplate DataType="{x:Type vm:FileViewModel}" x:Shared="False">
+        <!--  🔷 4画面（ファイル一覧用）：x:Key="TokiFileViewTemplate" と命名  -->
+        <DataTemplate x:Shared="False" DataType="{x:Type vm:FileViewModel}">
             <UserControls:FileView />
         </DataTemplate>
 
-        <!-- 🔷 右ツール（ランチャー用）：x:Key="TokiLuncherTemplate" と命名 -->
-        <DataTemplate DataType="{x:Type vm:LuncherViewModelWPF}" x:Shared="False">
+        <!--  🔷 右ツール（ランチャー用）：x:Key="TokiLuncherTemplate" と命名  -->
+        <DataTemplate x:Shared="False" DataType="{x:Type vm:LuncherViewModelWPF}">
             <UserControls:LuncherControl />
         </DataTemplate>
- 
+
 
 
     </Window.Resources>
-    <!-- 🌟【完全大復活の一撃】 -->
-    <!-- MainWindow自身は、C#側で DataContext にセットされた本物の DockingPaneViewModel インスタンスを -->
-    <!-- ライブラリ側（assembly=TokiDockingPane）のカスタムコントロールタグとして直接ここにカチッと直結します。 -->
-    <!-- これにより、WPFは Generic.xaml 内部の「5列のVS風設計図（Style）」を一瞬で100%確定解決し、即時ロードします！ -->
+    <!--  🌟【完全大復活の一撃】  -->
+    <!--  MainWindow自身は、C#側で DataContext にセットされた本物の DockingPaneViewModel インスタンスを  -->
+    <!--  ライブラリ側（assembly=TokiDockingPane）のカスタムコントロールタグとして直接ここにカチッと直結します。  -->
+    <!--  これにより、WPFは Generic.xaml 内部の「5列のVS風設計図（Style）」を一瞬で100%確定解決し、即時ロードします！  -->
     <Grid>
-        <viewModels:DockingPaneViewModel x:Name="DP" 
-            />
-        
-        
-        
+        <viewModels:DockingPaneViewModel x:Name="DP" />
+
+
+
     </Grid>
 </Window>

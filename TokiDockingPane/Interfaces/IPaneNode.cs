@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TokiDockingPane.Messages;
 using TokiDockingPane.Models;
 using TokiDockingPane.ViewModels;
 
@@ -57,12 +58,12 @@ public enum EnumToolPainPosition:byte
 }
 public interface IPaneNode : IDisposable, INotifyPropertyChanged
 {
+    public string ID { get; set; }
+
     // 親への参照（メインもツールも、ツリーを遡るために必須）
     public IPaneNode? MainChild { get; set; }
     public IPaneNode? SubChild { get; set; }
     public IPaneNode? Parent { get; set; }
-
-    public string ID { get; set; }
 
 
     /// <summary>
@@ -71,23 +72,26 @@ public interface IPaneNode : IDisposable, INotifyPropertyChanged
 
     public string Title { get; set; }
 
+    TreeContext? Context { get; set; }
 
     public bool IsToolPane { get; set; }
 
-    EnumToolPainPosition ToolPainPosition { get; set; } 
+    EnumToolPainPosition ToolPainPosition { get; set; }
 
     public bool IsAutoHidden { get; set; }
 
+    public bool IsPinned { get; set; }
+
     public EnumOrientation Orientation { get; set; }
 
-     
+
 
     public double SplitRatio { get; set; }    // Gridの * 寸法（Width/Height）にダイレクト連動
 
     public object? ViewModel { get; set; }          // 葉ノード（末端ペイン）が持つ実際のファイラーデータ
 
     // 現在選択されているアクティブなタブのインデックス（0ms切り替えのインデックス）
-    public  int SelectedTabIndex { get; set; }
+    public int SelectedTabIndex { get; set; }
 
     // タブに内包されている実体データ（ViewModel）の一覧
     public List<TabViewModel> TabViewModels { get; set; }
@@ -98,7 +102,7 @@ public interface IPaneNode : IDisposable, INotifyPropertyChanged
     public TabViewModel? SelectedTab { get; }
 
 
-     void AddNode(IPaneNode node);
+    public void AddNode(IPaneNode node);
 
     public void AddTab(TabViewModel tab);
     // タブを引き抜く（Remove）ための共通駆動

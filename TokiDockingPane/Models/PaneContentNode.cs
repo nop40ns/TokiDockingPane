@@ -74,8 +74,22 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     [ObservableProperty]
     EnumToolPainPosition _toolPainPosition = EnumToolPainPosition.None;
 
-    internal TreeContext? _context { get; set; }
+    partial void OnToolPainPositionChanged(EnumToolPainPosition value)
+    {
+        if (MainChild != null) MainChild.ToolPainPosition = value;
+        
+        if( SubChild != null) SubChild.ToolPainPosition = value;
+    }
 
+    [ObservableProperty]
+    TreeContext? _context;
+
+    partial void OnContextChanged(TreeContext? value)
+    {
+        if (MainChild != null) MainChild.Context = value;
+
+        if (SubChild != null) SubChild.Context = value;
+    }
 
     // 各タブの実体データ（ViewModelポインタ）を保持するリスト
     // ※ 1バイト管理思想に基づき、初期化時に一定数をプールするアプローチも可能
@@ -97,6 +111,9 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     [ObservableProperty]
     private bool _isAutoHidden = false;
 
+ 
+
+
     partial void OnIsAutoHiddenChanged(bool oldValue, bool newValue)
     {
         Debug.WriteLine($"--------------");
@@ -104,8 +121,8 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
         Debug.WriteLine($"IsAutoHidden:{IsAutoHidden}");
 
-        _context ?.Messenger.Send(new AutoHiddenChangedMessage(this, newValue));
-        Debug.WriteLine($"{ID}:{_context.GetHashCode()}");
+        Context ?.Messenger.Send(new AutoHiddenChangedMessage(this, newValue));
+        Debug.WriteLine($"{ID}:{Context.GetHashCode()}");
 
         //@@@@@@@@@
         //IPaneNode r = this;
@@ -125,7 +142,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         RemoveMe();
         // 📌 自分の部屋のピン留め状態をパチパチと反転させる
         this.IsPinned = !this.IsPinned;
-        this.IsAutoHidden = !this.IsPinned; // ピンが外れたら即座に自動隠蔽対象にする
+      //  this.IsAutoHidden = !this.IsPinned; // ピンが外れたら即座に自動隠蔽対象にする
 
         System.Diagnostics.Debug.WriteLine($"[AutoHidden] ノード単体制御: IsPinned={this.IsPinned}, IsAutoHidden={this.IsAutoHidden}");
 

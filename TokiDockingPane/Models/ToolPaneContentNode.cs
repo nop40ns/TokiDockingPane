@@ -13,21 +13,21 @@ public enum EnumToolState : byte
     AutoHidden = 1,
     Floating = 2
 }
- 
+
 public partial class ToolPaneContentNode : PaneContentNode
 {
     [ObservableProperty] private EnumToolState _state = EnumToolState.Docked;
     [ObservableProperty] private bool _isPopupOpened = false;
      
     [ObservableProperty] private double _paneSize = 280; // 幅または高さ
-     
- 
- 
+
+
+
 
     public ToolPaneContentNode() : base()
     {
     }
-     
+
     public ToolPaneContentNode(TabViewModel tab)
     {
         TabViewModels = new List<TabViewModel> { tab };
@@ -41,7 +41,7 @@ public partial class ToolPaneContentNode : PaneContentNode
     [RelayCommand] private void OpenPopup() => IsPopupOpened = true;
     [RelayCommand] private void ClosePopup() => IsPopupOpened = false;
 
-    public override void RemoveTab(int index)
+    public void RemoveTab(int index)
     {
         // まずは親クラス（PaneContentNode）の安全なタブ削除ロジックを執行
         base.RemoveTab(index);

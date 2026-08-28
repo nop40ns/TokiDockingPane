@@ -1,12 +1,8 @@
-﻿using System;
-using System.Diagnostics;
-using System.Windows;
-using System.Windows.Input;
-using System.Windows.Threading;
+﻿using System.Windows;
 using TokiDockingPane.Interfaces;
 using TokiDockingPane.Models;
 using TokiDockingPane.Test.ViewModels;
-using TokiDockingPane.ViewModels; // 上記のコンテナを使う場合
+using TokiDockingPane.ViewModels;
 
 namespace TokiDockingPane.Test;
 
@@ -99,20 +95,19 @@ public partial class MainWindow : Window
         // var mainVM = new DockingPaneViewModel(rootDocument );
         DP.RootDocumentNode = rootDocument;
 
+        DP.BottomToolPain.BasePane = solutionExplorerNode;
 
-        DP.BottomToolRoot = solutionExplorerNode;
-        DP.BottomToolRoot.ToolPainPosition = EnumToolPainPosition.Bottom;
+         
 
-
-        DP.RightToolRoot = t2;
-        DP.RightToolRoot.ToolPainPosition = EnumToolPainPosition.Right;
+        DP.RightToolPain.BasePane = t2;
+        
 
         t3.ID = "t3";
-        DP.LeftToolRoot = t3;
-        DP.LeftToolRoot.ToolPainPosition = EnumToolPainPosition.Left;
+        DP.LeftToolPain.BasePane = t3;
+        
 
 
-        DP.TopToolRoot = t4;
+        DP.TopToolPain.BasePane = t4;
         //DP.TopToolRoot.ToolPainPosition = EnumToolPainPosition.Top;
 
         //  DP.Refresh();
