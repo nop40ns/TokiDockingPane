@@ -78,7 +78,7 @@
                                 MinWidth="0" />
 
                             <!--  6: 右端サイドバー  -->
-                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="auto" />
 
                         </Grid.ColumnDefinitions>
 
@@ -212,7 +212,7 @@
                         <!--  👈 左ヘッダーエリア  -->
                         <ItemsControl
                             x:Name="PART_LeftAutoHiddenHedder"
-                            Grid.Row="0"
+                            Grid.Row="1"
                             Grid.RowSpan="7"
                             Grid.Column="0"
                             Width="Auto"
@@ -367,11 +367,11 @@
                             </ContentPresenter.Resources>
                             <ContentPresenter.Style>
                                 <Style TargetType="ContentPresenter">
-                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Setter Property="Visibility" Value="Collapsed" />
 
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding RightToolPain.IsContentVisible ,RelativeSource={RelativeSource TemplatedParent}}" Value="false">
-                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        <DataTrigger Binding="{Binding RightToolPain.IsContentVisible ,RelativeSource={RelativeSource TemplatedParent}}" Value="true">
+                                            <Setter Property="Visibility" Value="Visible" />
 
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -382,7 +382,7 @@
                         <!--  👉 右ヘッダーエリア  -->
                         <ItemsControl
                             x:Name="PART_RightAutoHiddenHedder"
-                            Grid.Row="0"
+                            Grid.Row="1"
                             Grid.RowSpan="7"
                             Grid.Column="6"
                             Width="Auto"
@@ -394,10 +394,10 @@
 
                             <ItemsControl.Style>
                                 <Style TargetType="ItemsControl">
-                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Setter Property="Visibility" Value="Visible" />
 
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding RightToolPain.IsHedderVisible , RelativeSource={RelativeSource TemplatedParent}}" Value="True ">
+                                        <DataTrigger Binding="{Binding RightToolPain.IsContentVisible , RelativeSource={RelativeSource TemplatedParent}}" Value="false ">
                                             <Setter Property="Visibility" Value="Visible" />
 
                                         </DataTrigger>
@@ -476,10 +476,10 @@
                               >
                             <Grid.Style>
                                 <Style TargetType="Grid">
-                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Setter Property="Visibility" Value="Collapsed" />
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding RightToolPain.IsHiddnVisible , RelativeSource={RelativeSource TemplatedParent}}" Value="false">
-                                            <Setter Property="Visibility" Value="Collapsed"  />
+                                        <DataTrigger Binding="{Binding RightToolPain.OverlayPaneNode.IsAutoHidden , RelativeSource={RelativeSource TemplatedParent}}" Value="false">
+                                            <Setter Property="Visibility" Value="Visible"  />
 
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -541,11 +541,11 @@
                             </ContentPresenter.Resources>
                             <ContentPresenter.Style>
                                 <Style TargetType="ContentPresenter">
-                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Setter Property="Visibility" Value="Collapsed" />
 
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding TopToolPain.IsContentVisible ,RelativeSource={RelativeSource TemplatedParent}}" Value="false">
-                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        <DataTrigger Binding="{Binding TopToolPain.IsContentVisible ,RelativeSource={RelativeSource TemplatedParent}}" Value="true">
+                                            <Setter Property="Visibility" Value="Visible" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -560,7 +560,7 @@
                             Grid.Row="0"
                             Grid.Column="0"
                             Grid.ColumnSpan="7"
-                            Width="Auto"
+                            Height ="Auto"
                             Panel.ZIndex="10000"
                             Background="#FF2D2D30"
                             BorderBrush="#FF3F3F46"
@@ -576,11 +576,11 @@
 
                             <ItemsControl.Style>
                                 <Style TargetType="ItemsControl">
-                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Setter Property="Visibility" Value="Collapsed" />
 
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding TopToolPain.IsContentVisible , RelativeSource={RelativeSource TemplatedParent}}" Value="false">
-                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Setter Property="Visibility" Value="Visible" />
 
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -591,7 +591,7 @@
                                 <DataTemplate>
                                     <ToggleButton
                                         x:Name="TopHiddenTabBorder"
-                                        Margin="0,0,0,5"
+                                        Margin="0,0,0,0"
                                         Padding="6,12,6,12"
                                         Background="Transparent"
                                         IsChecked="{Binding IsAutoHidden, Mode=TwoWay}">
@@ -616,7 +616,7 @@
                             Grid.Row="2"
                             Grid.Column="0"
                             Grid.ColumnSpan="7"
-                            Height="12"
+                            Height="auto"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
                             Background="#FF3E3E42"
@@ -649,14 +649,12 @@
                                 <Style TargetType="Grid">
                                     <Setter Property="Visibility" Value="Collapsed" />
                                     <Style.Triggers>
- 
 
-                                        <DataTrigger Binding="{Binding TopOverlayPaneNode.IsPinned}" Value="false">
+
+                                        <DataTrigger Binding="{Binding TopToolPain.OverlayPaneNode.IsAutoHidden , RelativeSource={RelativeSource TemplatedParent}}" Value="false">
                                             <Setter Property="Visibility" Value="Visible" />
                                         </DataTrigger>
-                                        <DataTrigger Binding="{Binding TopOverlayPaneNode.IsAutoHidden}" Value="True">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                        </DataTrigger>
+                                 
                                     </Style.Triggers>
                                 </Style>
                             </Grid.Style>
@@ -680,10 +678,10 @@
                                 x:Name="PART_TopOverlayContent"
                                 Grid.Row="0"
                                 Panel.ZIndex="50000"
-                                Content="{Binding TopOverlayPaneNode}">
+                                 Content="{Binding TopToolPain .OverlayPaneNode, RelativeSource={RelativeSource TemplatedParent}}">
 
                                 <ContentPresenter.ContentTemplate>
-                                    <DataTemplate DataType="{x:Type models:PaneContentNode}">
+                                    <DataTemplate DataType="{x:Type Interfaces:IPaneNode}">
                                         <local:DockingPane Content="{Binding}" DataContext="{Binding}" />
                                     </DataTemplate>
                                 </ContentPresenter.ContentTemplate>

@@ -24,34 +24,43 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     [ObservableProperty]
     private IPaneNode? _parent;
 
+    partial void OnParentChanged(IPaneNode? oldValue, IPaneNode? newValue)
+    {
+        if (newValue  == null)
+            Debug.WriteLine("");
+
+    }
+
     [ObservableProperty]
     private IPaneNode? _mainChild; // Verticalなら「左」、Horizontalなら「上」
 
-    partial void OnMainChildChanged(IPaneNode? value)
-    {
-        if (value == null) return;
-        
-        value.Parent = this;
+ 
 
-        //var v = value;
-        //while (v.Parent != null)
-        //{
-        //    v = v.Parent;
-        //}
-        //value.RootVM = v.RootVM;
+    partial void OnMainChildChanged(IPaneNode? oldValue, IPaneNode? newValue)
+    {
+        if (newValue == null) return;
+
+
+        newValue.Parent = this;
+
+        if (newValue.ID == "t0")
+            Debug.WriteLine($"{newValue.ID}の親として=>{this.ID}");
+
     }
+
+
 
     [ObservableProperty]
     private IPaneNode? _subChild;  // Verticalなら「右」、Horizontalなら「下」
-    partial void OnSubChildChanged(IPaneNode? value)
+  
+
+    partial void OnSubChildChanged(IPaneNode? oldValue, IPaneNode? newValue)
     {
-        if (value == null) return;
-            value.Parent = this;
+        if (newValue == null) return;
+        newValue.Parent = this;
     }
 
 
-
- 
 
     [ObservableProperty]
     private EnumOrientation _orientation;
@@ -122,8 +131,10 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
         //Debug.WriteLine($"IsAutoHidden:{IsAutoHidden}");
 
-        Context ?.Messenger.Send(new AutoHiddenChangedMessage(this, newValue));
 
+
+        var p = this.Parent;
+        Context?.Messenger.Send(new AutoHiddenChangedMessage(this, p, this.IsPinned));
 
         //Debug.WriteLine($"{ID}:{Context.GetHashCode()}");
 
@@ -142,20 +153,26 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     [RelayCommand]
     private void TogglePin(object parameter)
     {
-        RemoveMe();
+
+
+        var p = this.Parent;
         // 📌 自分の部屋のピン留め状態をパチパチと反転させる
-        this.IsPinned = !this.IsPinned;
-      //  this.IsAutoHidden = !this.IsPinned; // ピンが外れたら即座に自動隠蔽対象にする
+        this._isPinned = !this._isPinned;
+        //  this.IsAutoHidden = !this.IsPinned; // ピンが外れたら即座に自動隠蔽対象にする
+
+
 
         System.Diagnostics.Debug.WriteLine($"[AutoHidden] ノード単体制御: IsPinned={this.IsPinned}, IsAutoHidden={this.IsAutoHidden}");
 
 
-     
+             RemoveMe();
 
         if (parameter is DockingPaneViewModel mainVM)
         {
             mainVM.AddHiddenPane(this);
         }
+
+
 
         // 🌲 ツリーの真の最上位（Root）まで一気に遡る
         IPaneNode? root = this;
@@ -249,19 +266,6 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     }
 
 
-    partial void OnMainChildChanged(IPaneNode? oldValue, IPaneNode? newValue)
-    {
-        if (newValue == null) return;
-        newValue.Parent = this;
-
-        
-    }
-
-    partial void OnSubChildChanged(IPaneNode? oldValue, IPaneNode? newValue)
-    {
-        if (newValue == null) return;
-        newValue.Parent = this;
-    }
 
 
     public void AddNode(IPaneNode node)
@@ -328,6 +332,9 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         
         IPaneNode? grandParent = currentParent.Parent; // 自身の祖父
 
+
+
+
         // 自分の相方（兄弟ノード：消されずに生き残る本物のデータノード）を特定
         IPaneNode? sibling = (currentParent.MainChild == this)
             ? currentParent.SubChild
@@ -379,22 +386,11 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
                 // 祖父がいない場合は、親コンテナ（currentParent）を完全に『sibling』のクローンにするのではなく、
                 // 親コンテナの MainChild と SubChild 自体を sibling の持っていた子へ差し替えます。
                 // 1バイトのデータ破壊も起こさないよう、プロパティの「参照ポインタ」だけを安全にスライドさせます。
-                currentParent.MainChild = sibling.MainChild;
-                currentParent.SubChild = sibling.SubChild;
-                currentParent.Orientation = sibling.Orientation;
-                currentParent.SplitRatio = sibling.SplitRatio;
 
-                // 最重要：中身のデータ（ポインタ）をそのままアドレス移送
-                currentParent.TabViewModels = sibling.TabViewModels;
-                currentParent.SelectedTabIndex = sibling.SelectedTabIndex;
-                currentParent.ViewModel = sibling.ViewModel;
+                if (currentParent.MainChild == this) currentParent.MainChild = null;
+                if (currentParent.SubChild == this) currentParent.SubChild = null;
 
-                // 再結線
-                if (currentParent.MainChild != null) currentParent.MainChild.Parent = currentParent;
-                if (currentParent.SubChild != null) currentParent.SubChild.Parent = currentParent;
-
-                sibling.Parent = null;
-                this.Parent = null;
+ 
 
 
                 currentParent.RaisePropertyChanged(nameof(currentParent.MainChild));

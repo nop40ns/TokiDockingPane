@@ -1,15 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
+using DependencyPropertyGenerator;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using CommunityToolkit.Mvvm.Messaging;
 using TokiDockingPane.Interfaces;
 using TokiDockingPane.Messages;
 using TokiDockingPane.Models;
-using System.Diagnostics;
-using DependencyPropertyGenerator;
-using System.Runtime.CompilerServices;
 
 namespace TokiDockingPane.ViewModels;
 
@@ -49,24 +48,32 @@ public partial class DockingSideContext : DependencyObject
 
         //Debug.WriteLine($"{e.Property.Name}:{Position}" );
 
-        if (e.NewValue is IPaneNode newNode)
+        if ( e.NewValue is IPaneNode newNode)             
         {
             newNode.ToolPainPosition = Position;
             newNode.Context = Context;
 
-        }
-        if ( e.Property.Name == nameof(IsHiddnVisible))
-        {
+
+            if (e.Property.Name == nameof(IsHiddnVisible))
+            {
+
+            }
+
+            if (e.Property.Name == nameof(BasePane))
+            {
+             }
+
+            if (e.Property.Name == nameof(OverlayPaneNode))
+            {
+                Debug.WriteLine($"OverlayPaneNode.IsAutoHidden:{OverlayPaneNode.IsAutoHidden}");
+
+             //   UpdateIsContentVisible();
+
+            }
+
 
         }
-
-        if ( e.Property.Name == nameof(OverlayPaneNode)  )
-        {
-            Debug.WriteLine($"OverlayPaneNode.IsAutoHidden:{OverlayPaneNode.IsAutoHidden }");
-
-            UpdateIsContentVisible();
-
-        }
+     
 
     }
 
@@ -138,8 +145,40 @@ public partial class DockingSideContext : DependencyObject
         this._parent?.InvalidateArrange();
     }
 
+    public void ChangeFlag(  IPaneNode node )
+    {
+        if (BasePane is null)
+        {
+            IsContentVisible = false;
+            IsHedderVisible = false;
+            IsHiddnVisible = false;
+            return;
+        }
+        var s = BasePane;
+        if (HiddenPanes.Count() > 0)
+        {
+            if( BasePane.MainChild == null && BasePane.SubChild == null)
+            {
+                IsContentVisible = false;
+                IsHedderVisible = true;
+            }
+            else
+            {
+                IsContentVisible = true;
+                IsHedderVisible = true;
+            }
+        }
+
+        IsHiddnVisible = node.IsAutoHidden;
+
+
+    }
+
+
+
     private void UpdateIsContentVisible()
     {
+
         if (BasePane is null)
         {
             IsContentVisible = false;
@@ -174,7 +213,10 @@ public partial class DockingSideContext : DependencyObject
     public void AddHiddenPanes( IPaneNode node)
     {
         HiddenPanes.Add(node);
-        UpdateIsContentVisible();
+
+        ChangeFlag(node);
+
+//        UpdateIsContentVisible();
     }
 }
 
@@ -349,7 +391,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
             if (node is PaneContentNode paneNode)
             {
                 paneNode.Context = context;
-                System.Diagnostics.Debug.WriteLine($"【デバッグ】Context注入成功: {paneNode.ID} (Hash: {context.GetHashCode()})");
+    //            System.Diagnostics.Debug.WriteLine($"【デバッグ】Context注入成功: {paneNode.ID} (Hash: {context.GetHashCode()})");
             }
 
             // 3. 子階層を巡回（nullチェックを厳重に行う）
@@ -404,7 +446,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
             if (recipient is DockingPaneViewModel vm)
             {
                 // 安全にUIスレッド（または同期処理）で実行
-                vm.ChangeOverlay(message.TargetNode,message.IsAutoHidden );
+                vm.ChangeOverlay(message );
             }
         });
 
@@ -470,15 +512,23 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
 
 
 
-    public void ChangeOverlay(PaneContentNode node , bool IsPinned)
-    { 
+    public void ChangeOverlay( AutoHiddenChangedMessage msg )
+    {
+        IPaneNode node = msg.TargetNode;
+
+        IPaneNode parent = msg.ParentNode;
+        bool IsPinned = msg.IsAutoHidden;
+
+
         switch (node.ToolPainPosition)
         {
             case EnumToolPainPosition.Right:
 
+                RightToolPain.ChangeFlag(   node   );
+
                 RightToolPain.OverlayPaneNode = node;
                  
-                RightToolPain.IsHiddnVisible = node.IsPinned; 
+                RightToolPain.IsHiddnVisible = IsPinned; 
         
  
                 break;
@@ -494,14 +544,18 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
             case EnumToolPainPosition.Top:
                 TopToolPain.OverlayPaneNode = node;
 
-                TopToolPain.IsHiddnVisible = node.IsPinned;
+                TopToolPain.IsHiddnVisible = IsPinned;
 
                 break;
 
             case EnumToolPainPosition.Bottom:
+
+
                 BottomToolPain.OverlayPaneNode = node;
 
-                BottomToolPain.IsHiddnVisible = node.IsPinned;
+                BottomToolPain.ChangeFlag(node);
+
+                BottomToolPain.IsHiddnVisible = IsPinned;
                 break;
 
         }
