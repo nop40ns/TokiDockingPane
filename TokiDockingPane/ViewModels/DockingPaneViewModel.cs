@@ -17,7 +17,7 @@ namespace TokiDockingPane.ViewModels;
 [DependencyProperty<IPaneNode>("BasePane", OnChanged = nameof(OnSidePropertyChanged))]
 [DependencyProperty<ObservableCollection<IPaneNode>>("HiddenPanes" , OnChanged = nameof(OnChangeHiddenPanes))]
 [DependencyProperty<bool>("IsContentVisible", IsReadOnly = true , DefaultValue = true)]
-[DependencyProperty<bool>("IsHedderVisible",DefaultValue = false)]
+[DependencyProperty<bool>("IsHedderVisible",DefaultValue = true)]
 [DependencyProperty<bool>("IsHiddnVisible", DefaultValue = false , OnChanged = nameof(OnIsHiddnVisibleChanged))]
 
 public partial class DockingSideContext : DependencyObject
@@ -47,6 +47,9 @@ public partial class DockingSideContext : DependencyObject
         base.OnPropertyChanged(e);
 
         //Debug.WriteLine($"{e.Property.Name}:{Position}" );
+
+
+
 
         if ( e.NewValue is IPaneNode newNode)             
         {
@@ -524,27 +527,30 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
         {
             case EnumToolPainPosition.Right:
 
-                RightToolPain.ChangeFlag(   node   );
 
                 RightToolPain.OverlayPaneNode = node;
                  
-                RightToolPain.IsHiddnVisible = IsPinned; 
+               // RightToolPain.IsHiddnVisible = IsPinned; 
         
  
+                //RightToolPain.ChangeFlag(   node   );
                 break;
 
             case EnumToolPainPosition.Left:
 
                 LeftToolPain.OverlayPaneNode = node;
 
-                LeftToolPain.IsHiddnVisible = IsPinned;
+                Debug.WriteLine(LeftToolPain.OverlayPaneNode.IsAutoHidden);
+
+
+           //     LeftToolPain.IsHiddnVisible = IsPinned;
 
                 break;
 
             case EnumToolPainPosition.Top:
                 TopToolPain.OverlayPaneNode = node;
 
-                TopToolPain.IsHiddnVisible = IsPinned;
+                //TopToolPain.IsHiddnVisible = IsPinned;
 
                 break;
 
@@ -553,9 +559,9 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
 
                 BottomToolPain.OverlayPaneNode = node;
 
-                BottomToolPain.ChangeFlag(node);
+                //BottomToolPain.ChangeFlag(node);
 
-                BottomToolPain.IsHiddnVisible = IsPinned;
+                //BottomToolPain.IsHiddnVisible = IsPinned;
                 break;
 
         }

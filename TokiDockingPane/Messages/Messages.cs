@@ -22,7 +22,7 @@ namespace TokiDockingPane.Messages
         public IPaneNode ParentNode { get; }
 
         // 新しい値（true: 自動非表示, false: 固定表示）
-        public bool IsAutoHidden { get; }
+        public bool IsAutoHidden { get; } = false;
 
         public AutoHiddenChangedMessage(IPaneNode targetNode, IPaneNode parentNode, bool isAutoHidden)
         {

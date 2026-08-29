@@ -134,7 +134,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
 
         var p = this.Parent;
-        Context?.Messenger.Send(new AutoHiddenChangedMessage(this, p, this.IsPinned));
+        Context?.Messenger.Send(new AutoHiddenChangedMessage(this, p, newValue));
 
         //Debug.WriteLine($"{ID}:{Context.GetHashCode()}");
 
@@ -157,7 +157,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
         var p = this.Parent;
         // 📌 自分の部屋のピン留め状態をパチパチと反転させる
-        this._isPinned = !this._isPinned;
+        this.IsPinned = false;
         //  this.IsAutoHidden = !this.IsPinned; // ピンが外れたら即座に自動隠蔽対象にする
 
 

@@ -579,7 +579,7 @@
                                     <Setter Property="Visibility" Value="Collapsed" />
 
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding TopToolPain.IsContentVisible , RelativeSource={RelativeSource TemplatedParent}}" Value="false">
+                                        <DataTrigger Binding="{Binding TopToolPain.IsHedderVisible , RelativeSource={RelativeSource TemplatedParent}}" Value="false">
                                             <Setter Property="Visibility" Value="Visible" />
 
                                         </DataTrigger>
@@ -733,7 +733,7 @@
                                     <Setter Property="Visibility" Value="Visible" />
 
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding BottomToolPain.IsContentVisible , RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}" Value="false">
+                                        <DataTrigger Binding="{Binding BottomToolPain.IsHedderVisible , RelativeSource={RelativeSource TemplatedParent}}" Value="true">
                                             <Setter Property="Visibility" Value="Collapsed" />
                                         </DataTrigger>
                                     </Style.Triggers>
