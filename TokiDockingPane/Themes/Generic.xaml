@@ -66,16 +66,48 @@
 
 
                             <!--  3: ★中央メイン領域  -->
-                            <ColumnDefinition Width="*" MinWidth="200" />
+                            <ColumnDefinition  MinWidth="200" >
+                                <ColumnDefinition.Style>
+                                    <Style TargetType="ColumnDefinition">
+                                        <Setter Property="Width" Value="*" />
+
+
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding RightToolPain.IsContentVisible , RelativeSource={RelativeSource TemplatedParent}}" Value="true ">
+                                                <Setter Property="Width" Value="*" />
+
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ColumnDefinition.Style>
+
+                            </ColumnDefinition>
 
                             <!--  4: 右セパレータ用通路  -->
-                            <ColumnDefinition Width="auto" />
+                            <ColumnDefinition Width="auto" >
+                   
 
+                            </ColumnDefinition>
                             <!--  5: 👉右常設ツール  -->
                             <ColumnDefinition
                                 x:Name="Col_RightTool"
-                                Width="Auto"
-                                MinWidth="0" />
+                                 MinWidth="0" >
+
+                                <ColumnDefinition.Style>
+                                    <Style TargetType="ColumnDefinition">
+                                        <Setter Property="Width" Value="auto" />
+                                        
+
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding RightToolPain.IsContentVisible , RelativeSource={RelativeSource TemplatedParent}}" Value="false ">
+                                                <Setter Property="Width" Value="0" />
+
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ColumnDefinition.Style>
+
+                            </ColumnDefinition>
 
                             <!--  6: 右端サイドバー  -->
                             <ColumnDefinition Width="auto" />
@@ -179,8 +211,17 @@
                         </Grid>
 
 
+                        <TextBlock x:Name="XXX"
+                                   Grid.Column="0"                                   
+                                   >
+                        </TextBlock>
 
 
+                        <TextBlock x:Name="YYY"
+                                   Grid.Column="1"                                   
+                                   >
+                        </TextBlock>
+                        
                         <!--  👈 左常設エリア  -->
                         <ContentPresenter
                             x:Name="PART_LeftContent"
@@ -579,7 +620,7 @@
                                     <Setter Property="Visibility" Value="Collapsed" />
 
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding TopToolPain.IsHedderVisible , RelativeSource={RelativeSource TemplatedParent}}" Value="false">
+                                        <DataTrigger Binding="{Binding TopToolPain.IsContentVisible , RelativeSource={RelativeSource TemplatedParent}}" Value="false ">
                                             <Setter Property="Visibility" Value="Visible" />
 
                                         </DataTrigger>
@@ -616,7 +657,7 @@
                             Grid.Row="2"
                             Grid.Column="0"
                             Grid.ColumnSpan="7"
-                            Height="auto"
+                            Height="12"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
                             Background="#FF3E3E42"
@@ -733,7 +774,7 @@
                                     <Setter Property="Visibility" Value="Visible" />
 
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding BottomToolPain.IsHedderVisible , RelativeSource={RelativeSource TemplatedParent}}" Value="true">
+                                        <DataTrigger Binding="{Binding BottomToolPain.IsContentVisible , RelativeSource={RelativeSource TemplatedParent}}" Value="false">
                                             <Setter Property="Visibility" Value="Collapsed" />
                                         </DataTrigger>
                                     </Style.Triggers>

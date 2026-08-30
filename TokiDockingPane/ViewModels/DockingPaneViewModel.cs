@@ -17,7 +17,7 @@ namespace TokiDockingPane.ViewModels;
 [DependencyProperty<IPaneNode>("BasePane", OnChanged = nameof(OnSidePropertyChanged))]
 [DependencyProperty<ObservableCollection<IPaneNode>>("HiddenPanes" , OnChanged = nameof(OnChangeHiddenPanes))]
 [DependencyProperty<bool>("IsContentVisible", IsReadOnly = true , DefaultValue = true)]
-[DependencyProperty<bool>("IsHedderVisible",DefaultValue = true)]
+[DependencyProperty<bool>("IsHedderVisible",DefaultValue = false)]
 [DependencyProperty<bool>("IsHiddnVisible", DefaultValue = false , OnChanged = nameof(OnIsHiddnVisibleChanged))]
 
 public partial class DockingSideContext : DependencyObject
@@ -61,7 +61,10 @@ public partial class DockingSideContext : DependencyObject
             {
 
             }
+            if (e.Property.Name == nameof(IsHedderVisible))
+            {
 
+            }
             if (e.Property.Name == nameof(BasePane))
             {
              }
