@@ -472,7 +472,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
         _outerLeft = GetTemplateChild("PART_IndicatorOuterLeft") as Border;
         _outerRight = GetTemplateChild("PART_IndicatorOuterRight") as Border;
 
-        _outerRight.Drop += OnOuterDrop;
+    //    _outerRight.Drop += OnOuterDrop;
 
         //***************
 
