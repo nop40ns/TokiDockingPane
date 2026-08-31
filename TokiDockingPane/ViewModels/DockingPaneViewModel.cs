@@ -16,7 +16,8 @@ namespace TokiDockingPane.ViewModels;
 [DependencyProperty<IPaneNode>("OverlayPaneNode", OnChanged = nameof(OnSidePropertyChanged))]
 [DependencyProperty<IPaneNode>("BasePane", OnChanged = nameof(OnSidePropertyChanged))]
 [DependencyProperty<ObservableCollection<IPaneNode>>("HiddenPanes" , OnChanged = nameof(OnChangeHiddenPanes))]
-[DependencyProperty<bool>("IsContentVisible", IsReadOnly = true , DefaultValue = true)]
+[DependencyProperty<bool>("IsContentVisible", IsReadOnly = true, DefaultValue = true)]
+[DependencyProperty<bool>("IsSplitterVisible", IsReadOnly = true, DefaultValue = true)]
 [DependencyProperty<bool>("IsHedderVisible",DefaultValue = false)]
 [DependencyProperty<bool>("IsHiddnVisible", DefaultValue = false , OnChanged = nameof(OnIsHiddnVisibleChanged))]
 
@@ -49,7 +50,11 @@ public partial class DockingSideContext : DependencyObject
         //Debug.WriteLine($"{e.Property.Name}:{Position}" );
 
 
+    
+        if (e.Property.Name == nameof(IsHedderVisible))
+        {
 
+        }
 
         if ( e.NewValue is IPaneNode newNode)             
         {
@@ -57,14 +62,7 @@ public partial class DockingSideContext : DependencyObject
             newNode.Context = Context;
 
 
-            if (e.Property.Name == nameof(IsHiddnVisible))
-            {
 
-            }
-            if (e.Property.Name == nameof(IsHedderVisible))
-            {
-
-            }
             if (e.Property.Name == nameof(BasePane))
             {
              }
@@ -156,6 +154,7 @@ public partial class DockingSideContext : DependencyObject
         if (BasePane is null)
         {
             IsContentVisible = false;
+            IsSplitterVisible = false;
             IsHedderVisible = false;
             IsHiddnVisible = false;
             return;
@@ -166,16 +165,19 @@ public partial class DockingSideContext : DependencyObject
             if( BasePane.MainChild == null && BasePane.SubChild == null)
             {
                 IsContentVisible = false;
+                IsSplitterVisible = false;
                 IsHedderVisible = true;
             }
             else
             {
+                IsSplitterVisible = true;
+
                 IsContentVisible = true;
                 IsHedderVisible = true;
             }
         }
 
-        IsHiddnVisible = node.IsAutoHidden;
+       // IsHiddnVisible = node.IsAutoHidden;
 
 
     }
@@ -533,7 +535,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
 
                 RightToolPain.OverlayPaneNode = node;
                  
-               // RightToolPain.IsHiddnVisible = IsPinned; 
+                RightToolPain.IsHiddnVisible = !IsPinned; 
         
  
                 //RightToolPain.ChangeFlag(   node   );
@@ -542,6 +544,8 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
             case EnumToolPainPosition.Left:
 
                 LeftToolPain.OverlayPaneNode = node;
+
+                LeftToolPain.IsHiddnVisible = !IsPinned;
 
                 Debug.WriteLine(LeftToolPain.OverlayPaneNode.IsAutoHidden);
 
@@ -553,7 +557,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
             case EnumToolPainPosition.Top:
                 TopToolPain.OverlayPaneNode = node;
 
-                //TopToolPain.IsHiddnVisible = IsPinned;
+                TopToolPain.IsHiddnVisible = !IsPinned;
 
                 break;
 
@@ -564,7 +568,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
 
                 //BottomToolPain.ChangeFlag(node);
 
-                //BottomToolPain.IsHiddnVisible = IsPinned;
+                BottomToolPain.IsHiddnVisible = !IsPinned;
                 break;
 
         }
