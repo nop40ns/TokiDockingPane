@@ -632,7 +632,7 @@
                                         x:Name="PART_BottomOverlayContent"
                                         Grid.Row="2"
                                         Panel.ZIndex="50000"
-                                        Content="{Binding BottomOverlayPaneNode}">
+                                        Content="{Binding BottomToolPain .OverlayPaneNode, RelativeSource={RelativeSource TemplatedParent}}">
 
                                         <ContentPresenter.ContentTemplate>
                                             <DataTemplate DataType="{x:Type models:PaneContentNode}">
