@@ -8,7 +8,6 @@ namespace TokiDockingPane.Test;
 
 public partial class MainWindow : Window
 {
-    private bool _isRightToolPinned = true; // 初期状態はピン留め固定(Docked)
 
     public MainWindow()
     {
