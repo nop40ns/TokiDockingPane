@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using TokiDockingPane.Interfaces;
 using TokiDockingPane.Messages;
 using TokiDockingPane.Models;
@@ -245,14 +246,14 @@ public partial class DockingSideContext : DependencyObject
 [DependencyProperty<DockingSideContext>("TopToolPain")]
 [DependencyProperty<DockingSideContext>("BottomToolPain")]
 
- 
 
-     
+
+[DependencyProperty<Brush>("HedderBackground")]
+
 
 [ObservableObject]
 public partial class DockingPaneViewModel : Control
 {
-
 
 
 
@@ -267,6 +268,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
     {
         get => (IPaneNode)GetValue(RootDocumentNodeProperty);
         set => SetValue(RootDocumentNodeProperty, value);
+         
     }
 
 
@@ -274,7 +276,8 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
 
 
     public void SetToolPainPosition(IPaneNode nd)
-    {
+    { 
+        
         if (nd == null) return;
 
         if (nd.MainChild != null)
@@ -343,15 +346,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
     }
 
 
-
-    #region OverlayPaneNode
-
-
-
-
-
-
-    #endregion
+     
 
     //partial void OnBottomOverlayPaneNodeChanged(PaneContentNode? value)
     //{
@@ -374,6 +369,8 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
 
         DefaultStyleKeyProperty.OverrideMetadata(typeof(DockingPaneViewModel),
             new FrameworkPropertyMetadata(typeof(DockingPaneViewModel)));
+
+
     }
 
 
@@ -444,6 +441,11 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
 
         Debug.WriteLine($"{Context.GetHashCode()}:Context.GetHashCode()");
         //this.DataContext = this;
+
+
+
+
+
     }
     public override void OnApplyTemplate()
     {
@@ -458,6 +460,8 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
                 vm.ChangeOverlay(message );
             }
         });
+
+
 
         var _r = GetTemplateChild("PART_DockingOuterIndicator") as Grid;
 

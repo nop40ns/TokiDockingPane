@@ -4,9 +4,11 @@ using CommunityToolkit.Mvvm.Messaging;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Windows.Media;
 using TokiDockingPane.Interfaces;
 using TokiDockingPane.Messages;
 using TokiDockingPane.ViewModels;
+using DependencyPropertyGenerator;
 
 namespace TokiDockingPane.Models;
 
@@ -16,10 +18,14 @@ namespace TokiDockingPane.Models;
 /// 分割方向と2つの子ノードを再帰ネスト保持する、1バイト無駄のないレイアウトModel
 /// </summary>
 
+
+
 public partial class PaneContentNode :ObservableObject , IPaneNode
 {
 
     public string ID { get; set; }= "";
+
+
 
     [ObservableProperty]
     private IPaneNode? _parent;
@@ -245,7 +251,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         OnPropertyChanged(nameof(SelectedTabIndex));
         OnPropertyChanged(nameof(ActiveViewModel));
 
-        
+ 
     }
 
     /// <summary>

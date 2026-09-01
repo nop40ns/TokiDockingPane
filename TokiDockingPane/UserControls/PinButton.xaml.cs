@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using DependencyPropertyGenerator;
+using System.Diagnostics;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -7,6 +9,8 @@ namespace TokiDockingPane.UserControls
     /// <summary>
     /// PinButton.xaml の相互作用ロジック
     /// </summary>
+    /// 
+     
     public partial class PinButton : UserControl
     {
         public static readonly DependencyProperty IsPinnedProperty =
@@ -36,6 +40,7 @@ namespace TokiDockingPane.UserControls
             get => GetValue(CommandParameterProperty);
             set => SetValue(CommandParameterProperty, value);
         }
+ 
 
         public PinButton()
         {

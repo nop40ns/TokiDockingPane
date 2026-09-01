@@ -279,7 +279,7 @@
 
                                     <!--  ★上スプリッター（マウスカーソルを上下矢印「SizeNS」にします）  -->
                                     <cc:DockPanelSplitter
-                                        Height="15"
+                                        Height="12"
                                         Background="DarkGray"
                                         Cursor="SizeNS"
                                         DockPanel.Dock="Top"
@@ -808,7 +808,14 @@
                                                 MinWidth="80"
                                                 Margin="1,2,1,0"
                                                 Padding="10,4,6,4"
-                                                Background="#FF2D2D30"
+                                                
+                                                 Background="{Binding DataContext.HedderBackground, RelativeSource={RelativeSource AncestorType={x:Type local:DockingPane}}}"
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
                                                 BorderBrush="#FF3E3E42"
                                                 BorderThickness="1,1,1,0"
                                                 CornerRadius="3,3,0,0"
@@ -865,11 +872,26 @@
                                                     </Button>
 
 
-                                                    <uc:PinButton
+                                                    <uc:PinButton  x:Name ="PART_PinButton"
                                                         Grid.Column="2"
                                                         Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType={x:Type local:DockingPane}}}"
                                                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}"
-                                                        IsPinned="{Binding DataContext.IsPinned, RelativeSource={RelativeSource AncestorType={x:Type local:DockingPane}}}" />
+                                                        IsPinned="{Binding DataContext.IsPinned, RelativeSource={RelativeSource AncestorType={x:Type local:DockingPane}}}" >
+                                                        <uc:PinButton.Style>
+                                                            <Style TargetType="uc:PinButton">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding DataContext.IsToolPane, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" Value="True">
+
+
+
+                                                                        <Setter  Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </uc:PinButton.Style>
+
+                                                    </uc:PinButton>
 
 
 
@@ -1086,9 +1108,9 @@
                     <ControlTemplate.Triggers>
                         <!--  💡 部屋のDataContext（PaneContentNode）の IsToolPane が True のとき発動  -->
                         <DataTrigger Binding="{Binding IsToolPane}" Value="True">
-
+ 
                             <!--  1. タブヘッダー（PART_TabHeader）を DockPanel の「下（Bottom）」に引っ越しさせる！  -->
-                            <Setter TargetName="PART_TabHeader" Property="DockPanel.Dock" Value="Bottom" />
+                            <Setter TargetName="PART_TabHeader" Property="DockPanel.Dock" Value="top" />
 
                             <!--  2. ツールウィンドウ専用の背景色と枠線に変更する（VS風の少し明るいグレー）  -->
                             <Setter Property="Background" Value="#FF2D2D30" />

@@ -52,6 +52,7 @@ public partial class DockingPane : ContentControl
     private Border? _tabItemBorder;
 
 
+
     //static DockingPane()
     //{
     //    DefaultStyleKeyProperty.OverrideMetadata(typeof(DockingPane),
