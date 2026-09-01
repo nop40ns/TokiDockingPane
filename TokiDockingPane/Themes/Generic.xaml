@@ -283,7 +283,7 @@
                                         Background="DarkGray"
                                         Cursor="SizeNS"
                                         DockPanel.Dock="Top"
-                                         Visibility="{Binding TopToolPain.IsSplitterVisible, Converter={StaticResource BoolToVis}, RelativeSource={RelativeSource TemplatedParent}}" />
+                                        Visibility="{Binding TopToolPain.IsSplitterVisible, Converter={StaticResource BoolToVis}, RelativeSource={RelativeSource TemplatedParent}}" />
 
                                     <!--
                                         ========================================================
@@ -313,7 +313,7 @@
                                         Background="DarkGray"
                                         Cursor="SizeNS"
                                         DockPanel.Dock="Bottom"
-                                         Visibility="{Binding BottomToolPain.IsSplitterVisible, Converter={StaticResource BoolToVis}, RelativeSource={RelativeSource TemplatedParent}}" />
+                                        Visibility="{Binding BottomToolPain.IsSplitterVisible, Converter={StaticResource BoolToVis}, RelativeSource={RelativeSource TemplatedParent}}" />
 
                                     <!--
                                         ========================================================
@@ -342,11 +342,12 @@
 
                                     <!--  ★左スプリッター（マウスカーソルを左右矢印「SizeWE」にします）  -->
                                     <cc:DockPanelSplitter
+                                        x:Name="LeftDockPanelSplitter"
                                         Width="15"
                                         Background="DarkGray"
                                         Cursor="SizeWE"
                                         DockPanel.Dock="Left"
-                                         Visibility="{Binding LeftToolPain.IsSplitterVisible, Converter={StaticResource BoolToVis}, RelativeSource={RelativeSource TemplatedParent}}" />
+                                        Visibility="{Binding LeftToolPain.IsSplitterVisible, Converter={StaticResource BoolToVis}, RelativeSource={RelativeSource TemplatedParent}}" />
 
 
 
@@ -379,7 +380,7 @@
                                         Background="DarkGray"
                                         Cursor="SizeWE"
                                         DockPanel.Dock="Right"
-                                        Visibility="{Binding RightToolPain.IsSplitterVisible, Converter={StaticResource BoolToVis}, RelativeSource={RelativeSource TemplatedParent}}"  />
+                                        Visibility="{Binding RightToolPain.IsSplitterVisible, Converter={StaticResource BoolToVis}, RelativeSource={RelativeSource TemplatedParent}}" />
 
                                     <!--
                                         ========================================================
@@ -401,6 +402,7 @@
 
                                         <!--  📦 列2：中央メイン領域（4画面自由分割ツリー）  -->
                                         <ContentPresenter
+                                            AllowDrop="True"
                                             x:Name="PART_MainContent"
                                             Grid.Row="0"
                                             Grid.RowSpan="2"
@@ -877,7 +879,7 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <Grid
+                                <Grid  
                                     x:Name="PART_TabContentContainer"
                                     Background="#FF1E1E1E"
                                     TextBlock.Foreground="#FFDFDFDF">

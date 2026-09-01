@@ -34,12 +34,12 @@ public partial class DockingSideContext : DependencyObject
     // コンストラクタで親と位置を受け取る
     public DockingSideContext(DockingPaneViewModel parent, TreeContext context, EnumToolPainPosition position)
     {
+ 
         _parent = parent;
         Position = position;
         Context = context;
         HiddenPanes = new ObservableCollection<IPaneNode>();
 
-   
 
     }
 
@@ -53,7 +53,7 @@ public partial class DockingSideContext : DependencyObject
     
         if (e.Property.Name == nameof(IsHedderVisible))
         {
-
+            
         }
 
         if ( e.NewValue is IPaneNode newNode)             
@@ -65,7 +65,8 @@ public partial class DockingSideContext : DependencyObject
 
             if (e.Property.Name == nameof(BasePane))
             {
-             }
+                newNode.DockingSide = this;
+            }
 
             if (e.Property.Name == nameof(OverlayPaneNode))
             {
@@ -472,20 +473,20 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
         _outerLeft = GetTemplateChild("PART_IndicatorOuterLeft") as Border;
         _outerRight = GetTemplateChild("PART_IndicatorOuterRight") as Border;
 
-    //    _outerRight.Drop += OnOuterDrop;
+        //_outerRight.Drop += OnOuterDrop;
 
-        //***************
+        ////***************
 
 
-        // ★【最外殻D&Dインフラの起動】：
-        // 自分自身（画面全体）に対してもWPFのD&D受け入れシグナルを直結します
-        this.AllowDrop = true;
-        this.DragEnter += OnOuterDragEnter;
-        this.DragOver += OnOuterDragOver;
-        this.DragLeave += OnOuterDragLeave;
-        this.Drop += OnOuterDrop;
-        this.PreviewMouseDown += OnPreviewMouseDown;
-
+        //// ★【最外殻D&Dインフラの起動】：
+        //// 自分自身（画面全体）に対してもWPFのD&D受け入れシグナルを直結します
+        //this.AllowDrop = true;
+        //this.DragEnter += OnOuterDragEnter;
+        //this.DragOver += OnOuterDragOver;
+        //this.DragLeave += OnOuterDragLeave;
+        //this.Drop += OnOuterDrop;
+        //this.PreviewMouseDown += OnPreviewMouseDown;
+ 
 
         // 🧪 確定した本物のハッシュコードをログ出力
         Debug.WriteLine($"★[OnApplyTemplate] 本物のコントロール起動成功");
@@ -726,7 +727,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
             while (current != null)
             {
                 // 遡る途中で、右ツールペインのポップアップ外枠である Grid（Name="PART_RightToolPopup"）に到達した場合
-                if (current is System.Windows.Controls.Grid grid && grid.Name == "PART_RightToolPopup")
+                if (current is System.Windows.Controls.Grid grid && grid.Name.StartsWith ( "PART_"))
                 {
                     isClickInsidePopup = true; // ポップアップの内側（中身）をクリックしたと確定！
                     break;
@@ -746,7 +747,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
         }
     }
 
-
+ 
 
 
     // =========================================================================
@@ -754,7 +755,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
     // =========================================================================
     private void OnOuterDragEnter(object sender, DragEventArgs e)
     {
-        _indicatorOuter.Visibility = Visibility.Visible;
+        //_indicatorOuter.Visibility = Visibility.Visible;
 
         if (e.Data.GetDataPresent(typeof(TokiDragDropPayload)))
         {

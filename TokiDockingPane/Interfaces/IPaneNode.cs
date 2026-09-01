@@ -65,6 +65,7 @@ public interface IPaneNode : IDisposable, INotifyPropertyChanged
     public IPaneNode? SubChild { get; set; }
     public IPaneNode? Parent { get; set; }
 
+    DockingSideContext DockingSide { get; set; }
 
     /// <summary>
     ///  public DockingPaneViewModel RootVM { get; set; }

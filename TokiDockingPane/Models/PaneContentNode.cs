@@ -60,6 +60,8 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         newValue.Parent = this;
     }
 
+    [ObservableProperty]
+    DockingSideContext _dockingSide;
 
 
     [ObservableProperty]
