@@ -16,11 +16,11 @@ namespace TokiDockingPane.ViewModels;
 
 [DependencyProperty<IPaneNode>("OverlayPaneNode", OnChanged = nameof(OnSidePropertyChanged))]
 [DependencyProperty<IPaneNode>("BasePane", OnChanged = nameof(OnSidePropertyChanged))]
-[DependencyProperty<ObservableCollection<IPaneNode>>("HiddenPanes" , OnChanged = nameof(OnChangeHiddenPanes))]
+[DependencyProperty<ObservableCollection<IPaneNode>>("HiddenPanes", OnChanged = nameof(OnChangeHiddenPanes))]
 [DependencyProperty<bool>("IsContentVisible", IsReadOnly = true, DefaultValue = true)]
 [DependencyProperty<bool>("IsSplitterVisible", IsReadOnly = true, DefaultValue = true)]
-[DependencyProperty<bool>("IsHedderVisible",DefaultValue = false)]
-[DependencyProperty<bool>("IsHiddnVisible", DefaultValue = false , OnChanged = nameof(OnIsHiddnVisibleChanged))]
+[DependencyProperty<bool>("IsHedderVisible", DefaultValue = false)]
+[DependencyProperty<bool>("IsHiddnVisible", DefaultValue = false, OnChanged = nameof(OnIsHiddnVisibleChanged))]
 
 public partial class DockingSideContext : DependencyObject
 {
@@ -28,14 +28,14 @@ public partial class DockingSideContext : DependencyObject
     private readonly DockingPaneViewModel _parent;
 
     // 💡 自分が「左・右・上・下」のどれなのか
-    public EnumToolPainPosition Position { get; set;}
+    public EnumToolPainPosition Position { get; set; }
 
     public TreeContext Context;
 
     // コンストラクタで親と位置を受け取る
     public DockingSideContext(DockingPaneViewModel parent, TreeContext context, EnumToolPainPosition position)
     {
- 
+
         _parent = parent;
         Position = position;
         Context = context;
@@ -51,13 +51,13 @@ public partial class DockingSideContext : DependencyObject
         //Debug.WriteLine($"{e.Property.Name}:{Position}" );
 
 
-    
+
         if (e.Property.Name == nameof(IsHedderVisible))
         {
-            
+
         }
 
-        if ( e.NewValue is IPaneNode newNode)             
+        if (e.NewValue is IPaneNode newNode)
         {
             newNode.ToolPainPosition = Position;
             newNode.Context = Context;
@@ -73,13 +73,13 @@ public partial class DockingSideContext : DependencyObject
             {
                 Debug.WriteLine($"OverlayPaneNode.IsAutoHidden:{OverlayPaneNode.IsAutoHidden}");
 
-             //   UpdateIsContentVisible();
+                //   UpdateIsContentVisible();
 
             }
 
 
         }
-     
+
 
     }
 
@@ -105,9 +105,9 @@ public partial class DockingSideContext : DependencyObject
             // 親（DockingPaneViewModel）のメソッドを呼び出す
             side._parent.SetToolPainPosition(newNode);
 
-             side._parent.AttachContextToTree(newNode, side.Context);
-             
-            
+            side._parent.AttachContextToTree(newNode, side.Context);
+
+
 
             Debug.WriteLine($"{newNode.ID}:{newNode.GetHashCode()}");
         }
@@ -151,7 +151,7 @@ public partial class DockingSideContext : DependencyObject
         this._parent?.InvalidateArrange();
     }
 
-    public void ChangeFlag(  IPaneNode node )
+    public void ChangeFlag(IPaneNode node)
     {
         if (BasePane is null)
         {
@@ -164,7 +164,7 @@ public partial class DockingSideContext : DependencyObject
         var s = BasePane;
         if (HiddenPanes.Count() > 0)
         {
-            if( BasePane.MainChild == null && BasePane.SubChild == null)
+            if (BasePane.MainChild == null && BasePane.SubChild == null)
             {
                 IsContentVisible = false;
                 IsSplitterVisible = false;
@@ -178,8 +178,19 @@ public partial class DockingSideContext : DependencyObject
                 IsHedderVisible = true;
             }
         }
+        else
+        {
+            node.IsAutoHidden = false;
 
-       // IsHiddnVisible = node.IsAutoHidden;
+            IsContentVisible = true;
+            IsSplitterVisible = true;
+            IsHedderVisible = false;
+            IsHiddnVisible = false;
+
+
+        }
+
+        // IsHiddnVisible = node.IsAutoHidden;
 
 
     }
@@ -197,13 +208,13 @@ public partial class DockingSideContext : DependencyObject
             return;
         }
 
-        if(HiddenPanes.Count()>=0)
+        if (HiddenPanes.Count() >= 0)
         {
             IsContentVisible = false;
             IsHedderVisible = true;
         }
 
-        if (OverlayPaneNode is IPaneNode overlay   )
+        if (OverlayPaneNode is IPaneNode overlay)
         {
             //IsContentVisible = false;
 
@@ -212,22 +223,41 @@ public partial class DockingSideContext : DependencyObject
             //IsContentVisible = true;
             return;
         }
-  //      IsContentVisible = true;
+        //      IsContentVisible = true;
 
 
-         
+
 
 
     }
 
-    public void AddHiddenPanes( IPaneNode node)
+    public void AddBasePane(IPaneNode node)
+    {
+        BasePane = node;
+
+        ChangeFlag(node);
+
+        //        UpdateIsContentVisible();
+    }
+
+    public void AddHiddenPanes(IPaneNode node)
     {
         HiddenPanes.Add(node);
 
         ChangeFlag(node);
 
-//        UpdateIsContentVisible();
+        //        UpdateIsContentVisible();
     }
+
+    public void RemoveHiddenPanes(IPaneNode node)
+    {
+        HiddenPanes.Remove(node);
+
+        ChangeFlag(node);
+
+        //        UpdateIsContentVisible();
+    }
+
 }
 
 /// <summary>
@@ -249,6 +279,8 @@ public partial class DockingSideContext : DependencyObject
 
 
 [DependencyProperty<Brush>("HedderBackground")]
+[DependencyProperty<Brush>("HedderMouseoverBackground")]
+[DependencyProperty<Brush>("HedderActiveBackground")]
 
 
 [ObservableObject]
@@ -268,7 +300,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
     {
         get => (IPaneNode)GetValue(RootDocumentNodeProperty);
         set => SetValue(RootDocumentNodeProperty, value);
-         
+
     }
 
 
@@ -276,8 +308,8 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
 
 
     public void SetToolPainPosition(IPaneNode nd)
-    { 
-        
+    {
+
         if (nd == null) return;
 
         if (nd.MainChild != null)
@@ -321,7 +353,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
 
             if (e.NewValue is IPaneNode newNode)
             {
-               // newNode.ToolPainPosition = position;
+                // newNode.ToolPainPosition = position;
 
                 // 💡 既存のレイアウト構築処理を走らせる
                 vm.SetToolPainPosition(newNode);
@@ -340,13 +372,13 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
             vm.InvalidateVisual();
 
             Debug.WriteLine("Peopety");
- 
-       
+
+
         }
     }
 
 
-     
+
 
     //partial void OnBottomOverlayPaneNodeChanged(PaneContentNode? value)
     //{
@@ -397,7 +429,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
             if (node is PaneContentNode paneNode)
             {
                 paneNode.Context = context;
-    //            System.Diagnostics.Debug.WriteLine($"【デバッグ】Context注入成功: {paneNode.ID} (Hash: {context.GetHashCode()})");
+                //            System.Diagnostics.Debug.WriteLine($"【デバッグ】Context注入成功: {paneNode.ID} (Hash: {context.GetHashCode()})");
             }
 
             // 3. 子階層を巡回（nullチェックを厳重に行う）
@@ -425,15 +457,15 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
         }
     }
 
- 
+
 
     public DockingPaneViewModel()
     {
         LeftToolPain = new(this, Context, EnumToolPainPosition.Left);
-        RightToolPain  = new(this, Context, EnumToolPainPosition.Right);
+        RightToolPain = new(this, Context, EnumToolPainPosition.Right);
         TopToolPain = new(this, Context, EnumToolPainPosition.Top);
-        BottomToolPain  = new(this, Context, EnumToolPainPosition.Bottom);
-         
+        BottomToolPain = new(this, Context, EnumToolPainPosition.Bottom);
+
 
         Debug.WriteLine("引数なし");
 
@@ -457,7 +489,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
             if (recipient is DockingPaneViewModel vm)
             {
                 // 安全にUIスレッド（または同期処理）で実行
-                vm.ChangeOverlay(message );
+                vm.ChangeOverlay(message);
             }
         });
 
@@ -490,7 +522,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
         //this.DragLeave += OnOuterDragLeave;
         //this.Drop += OnOuterDrop;
         //this.PreviewMouseDown += OnPreviewMouseDown;
- 
+
 
         // 🧪 確定した本物のハッシュコードをログ出力
         Debug.WriteLine($"★[OnApplyTemplate] 本物のコントロール起動成功");
@@ -506,7 +538,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
         //if (BottomToolRoot != null) AttachContextToTree(BottomToolRoot, Context);
     }
 
- 
+
 
     void RefreshSub(IPaneNode nd)
     {
@@ -525,7 +557,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
 
 
 
-    public void ChangeOverlay( AutoHiddenChangedMessage msg )
+    public void ChangeOverlay(AutoHiddenChangedMessage msg)
     {
         IPaneNode node = msg.TargetNode;
 
@@ -539,10 +571,10 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
 
 
                 RightToolPain.OverlayPaneNode = node;
-                 
-                RightToolPain.IsHiddnVisible = !IsPinned; 
-        
- 
+
+                RightToolPain.IsHiddnVisible = !IsPinned;
+
+
                 //RightToolPain.ChangeFlag(   node   );
                 break;
 
@@ -555,7 +587,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
                 Debug.WriteLine(LeftToolPain.OverlayPaneNode.IsAutoHidden);
 
 
-           //     LeftToolPain.IsHiddnVisible = IsPinned;
+                //     LeftToolPain.IsHiddnVisible = IsPinned;
 
                 break;
 
@@ -649,18 +681,18 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
         {
             case EnumToolPainPosition.Right:
 
-                RightToolPain.AddHiddenPanes (node);
+                RightToolPain.AddHiddenPanes(node);
 
                 break;
 
             case EnumToolPainPosition.Left:
 
                 LeftToolPain.AddHiddenPanes(node);
-                 
+
                 break;
 
             case EnumToolPainPosition.Top:
-                 
+
                 TopToolPain.AddHiddenPanes(node);
 
 
@@ -669,7 +701,75 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
             case EnumToolPainPosition.Bottom:
 
                 BottomToolPain.AddHiddenPanes(node);
-                 
+
+                break;
+
+        }
+    }
+
+    public void RemoveHiddenPane(PaneContentNode node)
+    {
+        if (node == null || node.IsToolPane == false) return;
+
+        switch (node.ToolPainPosition)
+        {
+            case EnumToolPainPosition.Right:
+
+                RightToolPain.RemoveHiddenPanes(node);
+
+                break;
+
+            case EnumToolPainPosition.Left:
+
+                LeftToolPain.RemoveHiddenPanes(node);
+
+                break;
+
+            case EnumToolPainPosition.Top:
+
+                TopToolPain.RemoveHiddenPanes(node);
+
+
+                break;
+
+            case EnumToolPainPosition.Bottom:
+
+                BottomToolPain.RemoveHiddenPanes(node);
+
+                break;
+
+        }
+    }
+
+    public void AddBasenPane(PaneContentNode node)
+    {
+        if (node == null || node.IsToolPane == false) return;
+
+        switch (node.ToolPainPosition)
+        {
+            case EnumToolPainPosition.Right:
+
+                RightToolPain.AddBasePane(node);
+
+                break;
+
+            case EnumToolPainPosition.Left:
+
+                LeftToolPain.AddBasePane(node);
+
+                break;
+
+            case EnumToolPainPosition.Top:
+
+                TopToolPain.AddBasePane(node);
+
+
+                break;
+
+            case EnumToolPainPosition.Bottom:
+
+                BottomToolPain.AddBasePane(node);
+
                 break;
 
         }
@@ -731,7 +831,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
             while (current != null)
             {
                 // 遡る途中で、右ツールペインのポップアップ外枠である Grid（Name="PART_RightToolPopup"）に到達した場合
-                if (current is System.Windows.Controls.Grid grid && grid.Name.StartsWith ( "PART_"))
+                if (current is System.Windows.Controls.Grid grid && grid.Name.StartsWith("PART_"))
                 {
                     isClickInsidePopup = true; // ポップアップの内側（中身）をクリックしたと確定！
                     break;
@@ -751,7 +851,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
         }
     }
 
- 
+
 
 
     // =========================================================================

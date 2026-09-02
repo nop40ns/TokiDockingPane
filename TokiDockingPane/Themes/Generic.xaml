@@ -64,20 +64,40 @@
                                     <DataTemplate>
                                         <ToggleButton
                                             x:Name="LeftHiddenTabBorder"
-                                            Margin="0,0,0,5"
-                                            Padding="6,12,6,12"
-                                            Background="Transparent"
+                                            Margin="0,0,5,0"
                                             IsChecked="{Binding IsAutoHidden, Mode=TwoWay}">
+                                            <ToggleButton.Style>
+                                                <Style TargetType="ToggleButton">
+                                                    <!--  既定のテンプレートをクリアし、単純な ContentPresenter だけにする  -->
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="ToggleButton">
+                                                                <!--  BorderのBorderThicknessを0、Backgroundを透明に設定  -->
+                                                                <Border Background="Transparent" BorderThickness="0">
+                                                                    <!--  中身のTextBlockを表示する領域  -->
+                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                            </ToggleButton.Style>
 
                                             <TextBlock
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
+                                                Padding="10,0,10,0"
+                                                HorizontalAlignment="Stretch"
+                                                VerticalAlignment="Stretch"
                                                 FontSize="12"
-                                                Foreground="#FFDCDCDC"
                                                 Text="{Binding SelectedTab.Title}">
                                                 <TextBlock.LayoutTransform>
                                                     <RotateTransform Angle="90" />
                                                 </TextBlock.LayoutTransform>
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Background" Value="{Binding HedderBackground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}" />
+                                                        <Setter Property="Foreground" Value="White" />
+                                                    </Style>
+                                                </TextBlock.Style>
                                             </TextBlock>
                                         </ToggleButton>
                                     </DataTemplate>
@@ -120,22 +140,41 @@
                                     <DataTemplate>
                                         <ToggleButton
                                             x:Name="RightHiddenTabBorder"
-                                            Margin="0,0,0,5"
-                                            Padding="6,12,6,12"
+                                            Margin="0,0,5,0"
                                             Background="Transparent"
                                             IsChecked="{Binding IsAutoHidden, Mode=TwoWay}">
+                                            <ToggleButton.Style>
+                                                <Style TargetType="ToggleButton">
+                                                    <!--  既定のテンプレートをクリアし、単純な ContentPresenter だけにする  -->
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="ToggleButton">
+                                                                <!--  BorderのBorderThicknessを0、Backgroundを透明に設定  -->
+                                                                <Border Background="Transparent" BorderThickness="0">
+                                                                    <!--  中身のTextBlockを表示する領域  -->
+                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                            </ToggleButton.Style>
 
-
-                                            <!--  文字列（タイトル）を時計回りに 90 度回転させて美しい縦書きにします  -->
                                             <TextBlock
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
+                                                Padding="10,0,10,0"
+                                                HorizontalAlignment="Stretch"
+                                                VerticalAlignment="Stretch"
                                                 FontSize="12"
-                                                Foreground="#FFDCDCDC"
                                                 Text="{Binding SelectedTab.Title}">
                                                 <TextBlock.LayoutTransform>
                                                     <RotateTransform Angle="90" />
                                                 </TextBlock.LayoutTransform>
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Background" Value="{Binding HedderBackground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}" />
+                                                        <Setter Property="Foreground" Value="White" />
+                                                    </Style>
+                                                </TextBlock.Style>
                                             </TextBlock>
                                         </ToggleButton>
                                     </DataTemplate>
@@ -170,13 +209,36 @@
                                             Background="Transparent"
                                             IsChecked="{Binding IsAutoHidden, Mode=TwoWay}">
 
-                                            <!--  文字列（タイトル）を時計回りに 90 度回転させて美しい縦書きにします  -->
+                                            <ToggleButton.Style>
+                                                <Style TargetType="ToggleButton">
+                                                    <!--  既定のテンプレートをクリアし、単純な ContentPresenter だけにする  -->
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="ToggleButton">
+                                                                <!--  BorderのBorderThicknessを0、Backgroundを透明に設定  -->
+                                                                <Border Background="Transparent" BorderThickness="0">
+                                                                    <!--  中身のTextBlockを表示する領域  -->
+                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                            </ToggleButton.Style>
+
                                             <TextBlock
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
+                                                Padding="10,0,0,0"
+                                                HorizontalAlignment="Stretch"
+                                                VerticalAlignment="Stretch"
                                                 FontSize="12"
-                                                Foreground="#FFDCDCDC"
-                                                Text="{Binding SelectedTab.Title}" />
+                                                Text="{Binding SelectedTab.Title}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Background" Value="{Binding HedderBackground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}" />
+                                                        <Setter Property="Foreground" Value="White" />
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
                                         </ToggleButton>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -214,21 +276,44 @@
                                 <!--  🎯 VSそっくりの「縦書きタブボタン」のデザイン  -->
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
+
                                         <ToggleButton
-                                            x:Name="TopHiddenTabBorder"
-                                            Margin="0,0,0,0"
-                                            Padding="6,12,6,12"
+                                            x:Name="RightHiddenTabBorder"
+                                            Margin="0,0,5,0"
                                             Background="Transparent"
                                             IsChecked="{Binding IsAutoHidden, Mode=TwoWay}">
+                                            <ToggleButton.Style>
+                                                <Style TargetType="ToggleButton">
+                                                    <!--  既定のテンプレートをクリアし、単純な ContentPresenter だけにする  -->
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="ToggleButton">
+                                                                <!--  BorderのBorderThicknessを0、Backgroundを透明に設定  -->
+                                                                <Border Background="Transparent" BorderThickness="0">
+                                                                    <!--  中身のTextBlockを表示する領域  -->
+                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                            </ToggleButton.Style>
 
-                                            <!--  文字列（タイトル）を時計回りに 90 度回転させて美しい縦書きにします  -->
                                             <TextBlock
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
+                                                Padding="10,0,0,0"
+                                                HorizontalAlignment="Stretch"
+                                                VerticalAlignment="Stretch"
                                                 FontSize="12"
-                                                Foreground="#FFDCDCDC"
-                                                Text="{Binding SelectedTab.Title}" />
+                                                Text="{Binding SelectedTab.Title}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Background" Value="{Binding HedderBackground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}" />
+                                                        <Setter Property="Foreground" Value="White" />
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
                                         </ToggleButton>
+
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
 
@@ -279,7 +364,7 @@
 
                                     <!--  ★上スプリッター（マウスカーソルを上下矢印「SizeNS」にします）  -->
                                     <cc:DockPanelSplitter
-                                        Height="12"
+                                        Height="4"
                                         Background="DarkGray"
                                         Cursor="SizeNS"
                                         DockPanel.Dock="Top"
@@ -309,7 +394,7 @@
 
                                     <!--  ★下スプリッター  -->
                                     <cc:DockPanelSplitter
-                                        Height="15"
+                                        Height="4"
                                         Background="DarkGray"
                                         Cursor="SizeNS"
                                         DockPanel.Dock="Bottom"
@@ -343,7 +428,7 @@
                                     <!--  ★左スプリッター（マウスカーソルを左右矢印「SizeWE」にします）  -->
                                     <cc:DockPanelSplitter
                                         x:Name="LeftDockPanelSplitter"
-                                        Width="15"
+                                        Width="4"
                                         Background="DarkGray"
                                         Cursor="SizeWE"
                                         DockPanel.Dock="Left"
@@ -376,7 +461,7 @@
 
                                     <!--  ★右スプリッター  -->
                                     <cc:DockPanelSplitter
-                                        Width="15"
+                                        Width="4"
                                         Background="DarkGray"
                                         Cursor="SizeWE"
                                         DockPanel.Dock="Right"
@@ -402,7 +487,6 @@
 
                                         <!--  📦 列2：中央メイン領域（4画面自由分割ツリー）  -->
                                         <ContentPresenter
-                                            AllowDrop="True"
                                             x:Name="PART_MainContent"
                                             Grid.Row="0"
                                             Grid.RowSpan="2"
@@ -410,6 +494,7 @@
                                             Grid.ColumnSpan="2"
                                             HorizontalAlignment="Stretch"
                                             VerticalAlignment="Stretch"
+                                            AllowDrop="True"
                                             Content="{Binding RootDocumentNode, RelativeSource={RelativeSource TemplatedParent}}" />
 
                                         <Grid
@@ -536,7 +621,7 @@
                                     <GridSplitter
                                         x:Name="PART_LeftHiddenSplitter"
                                         Grid.Column="1"
-                                        Width="18"
+                                        Width="4"
                                         HorizontalAlignment="Stretch"
                                         Visibility="{Binding LeftToolPain.IsHiddnVisible, Converter={StaticResource BoolToVis}, RelativeSource={RelativeSource TemplatedParent}}" />
                                 </Grid>
@@ -578,7 +663,7 @@
                                     <GridSplitter
                                         x:Name="PART_RightHiddenSplitter"
                                         Grid.Column="1"
-                                        Width="18"
+                                        Width="4"
                                         HorizontalAlignment="Stretch"
                                         Visibility="{Binding RightToolPain.IsHiddnVisible, Converter={StaticResource BoolToVis}, RelativeSource={RelativeSource TemplatedParent}}" />
                                 </Grid>
@@ -616,7 +701,7 @@
                                     <GridSplitter
                                         x:Name="PART_TopHiddenSplitter"
                                         Grid.Row="1"
-                                        Height="18"
+                                        Height="4"
                                         HorizontalAlignment="Stretch"
                                         Visibility="{Binding TopToolPain.IsHiddnVisible, Converter={StaticResource BoolToVis}, RelativeSource={RelativeSource TemplatedParent}}" />
                                 </Grid>
@@ -656,7 +741,7 @@
                                     <GridSplitter
                                         x:Name="PART_BottomHiddenSplitter"
                                         Grid.Row="1"
-                                        Height="18"
+                                        Height="4"
                                         HorizontalAlignment="Stretch"
                                         Visibility="{Binding BottomToolPain.IsHiddnVisible, Converter={StaticResource BoolToVis}, RelativeSource={RelativeSource TemplatedParent}}" />
                                 </Grid>
@@ -764,12 +849,27 @@
     <!--  =========================================================================  -->
     <Style TargetType="{x:Type local:DockingPane}">
         <Setter Property="Background" Value="#FF1E1E1E" />
-        <Setter Property="BorderBrush" Value="#FF3E3E42" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="LightGray" />
+        <Setter Property="BorderThickness" Value="3" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type local:DockingPane}">
-                    <Grid Visibility="{Binding IsAutoHidden, Converter={StaticResource TrueToCollapsedConverter}}">
+                    <Grid Visibility="{Binding IsAutoHidden, Converter={StaticResource TrueToCollapsedConverter}}"
+                         
+                          
+                          >
+
+                        <Grid.InputBindings>
+                            <!-- 左シングルクリックでCommandを呼び出す場合 -->
+                            <MouseBinding MouseAction="LeftClick"  
+                                             Command="{Binding DataContext.OnClickCommand }"
+                                          />
+
+                            <!-- 左ダブルクリックの場合 -->
+                            <!-- <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding MyDoubleClickCommand}" /> -->
+                        </Grid.InputBindings>
+
+
                         <!--  【状態②：マルチタブ実体状態（通常フォルダ ＆ ツール共通枠）】  -->
                         <Border
                             x:Name="LeafVisual"
@@ -777,8 +877,13 @@
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             Visibility="Collapsed">
+
+
+
+
                             <DockPanel>
-                                <ItemsControl
+                                <ItemsControl 
+                                    
                                     x:Name="PART_TabHeader"
                                     Background="#FF2D2D30"
                                     DockPanel.Dock="Top"
@@ -808,14 +913,7 @@
                                                 MinWidth="80"
                                                 Margin="1,2,1,0"
                                                 Padding="10,4,6,4"
-                                                
-                                                 Background="{Binding DataContext.HedderBackground, RelativeSource={RelativeSource AncestorType={x:Type local:DockingPane}}}"
-                                                
-                                                
-                                                
-                                                
-                                                
-                                                
+                                                Background="{Binding HedderBackground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}"
                                                 BorderBrush="#FF3E3E42"
                                                 BorderThickness="1,1,1,0"
                                                 CornerRadius="3,3,0,0"
@@ -831,7 +929,7 @@
                                                         Grid.Column="0"
                                                         HorizontalAlignment="Left"
                                                         VerticalAlignment="Center"
-                                                        FontSize="24"
+                                                        FontSize="12"
                                                         Foreground="#FFDFDFDF"
                                                         Text="{Binding Title}"
                                                         ToolTip="{Binding Title}" />
@@ -872,20 +970,21 @@
                                                     </Button>
 
 
-                                                    <uc:PinButton  x:Name ="PART_PinButton"
+                                                    <uc:PinButton
+                                                        x:Name="PART_PinButton"
                                                         Grid.Column="2"
                                                         Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType={x:Type local:DockingPane}}}"
                                                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}"
-                                                        IsPinned="{Binding DataContext.IsPinned, RelativeSource={RelativeSource AncestorType={x:Type local:DockingPane}}}" >
+                                                        IsPinned="{Binding DataContext.IsPinned, RelativeSource={RelativeSource AncestorType={x:Type local:DockingPane}}}">
                                                         <uc:PinButton.Style>
                                                             <Style TargetType="uc:PinButton">
-                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                <Setter Property="Visibility" Value="Collapsed" />
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding DataContext.IsToolPane, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" Value="True">
 
 
 
-                                                                        <Setter  Property="Visibility" Value="Visible"/>
+                                                                        <Setter Property="Visibility" Value="Visible" />
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
@@ -901,11 +1000,14 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <Grid  
+                                <Grid
                                     x:Name="PART_TabContentContainer"
                                     Background="#FF1E1E1E"
                                     TextBlock.Foreground="#FFDFDFDF">
                                     <ContentPresenter Content="{Binding DataContext.ActiveViewModel, RelativeSource={RelativeSource TemplatedParent}}" />
+
+
+
                                     <Grid
                                         x:Name="PART_DockingIndicator"
                                         Width="120"
@@ -1004,6 +1106,10 @@
                                             </Border>
                                         </Grid>
                                     </Grid>
+
+
+
+
                                 </Grid>
                             </DockPanel>
                         </Border>
@@ -1108,7 +1214,7 @@
                     <ControlTemplate.Triggers>
                         <!--  💡 部屋のDataContext（PaneContentNode）の IsToolPane が True のとき発動  -->
                         <DataTrigger Binding="{Binding IsToolPane}" Value="True">
- 
+
                             <!--  1. タブヘッダー（PART_TabHeader）を DockPanel の「下（Bottom）」に引っ越しさせる！  -->
                             <Setter TargetName="PART_TabHeader" Property="DockPanel.Dock" Value="top" />
 

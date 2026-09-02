@@ -103,6 +103,18 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
     partial void OnContextChanged(TreeContext? value)
     {
+
+        Context.Messenger.Register<IsSelectedChangedMessage>(this, (recipient, message) =>
+        {
+            if (recipient is PaneContentNode vm && vm != this)
+            {
+                 IsSelected = false;
+            }
+        });
+
+
+        
+
         if (MainChild != null) MainChild.Context = value;
 
         if (SubChild != null) SubChild.Context = value;
@@ -157,6 +169,20 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     }
 
 
+    [ObservableProperty] bool _isSelected = false;
+
+    partial void OnIsSelectedChanged(bool oldValue, bool newValue)
+    {
+        Context?.Messenger.Send(new IsSelectedChangedMessage(this));
+    }
+
+
+
+    [RelayCommand]
+    private void OnClick(object parameter)
+    {
+
+    }
 
     [RelayCommand]
     private void TogglePin(object parameter)
@@ -164,21 +190,37 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
 
         var p = this.Parent;
-        // 📌 自分の部屋のピン留め状態をパチパチと反転させる
-        this.IsPinned = false;
-        //  this.IsAutoHidden = !this.IsPinned; // ピンが外れたら即座に自動隠蔽対象にする
+
+        if(this.IsPinned)
+        { 
+            // 📌 自分の部屋のピン留め状態をパチパチと反転させる
+            this.IsPinned = false;
+            //  this.IsAutoHidden = !this.IsPinned; // ピンが外れたら即座に自動隠蔽対象にする
 
 
 
-        System.Diagnostics.Debug.WriteLine($"[AutoHidden] ノード単体制御: IsPinned={this.IsPinned}, IsAutoHidden={this.IsAutoHidden}");
+            System.Diagnostics.Debug.WriteLine($"[AutoHidden] ノード単体制御: IsPinned={this.IsPinned}, IsAutoHidden={this.IsAutoHidden}");
 
 
-             RemoveMe();
 
-        if (parameter is DockingPaneViewModel mainVM)
-        {
-            mainVM.AddHiddenPane(this);
+            if (parameter is DockingPaneViewModel mainVM)
+            {
+                mainVM.AddHiddenPane(this);
+            }
         }
+        else
+        {
+            this.IsPinned = true;
+            RemoveMe();
+
+            if (parameter is DockingPaneViewModel mainVM)
+            {
+                mainVM.RemoveHiddenPane(this);
+            }
+        
+        }
+
+
 
 
 
@@ -251,7 +293,14 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         OnPropertyChanged(nameof(SelectedTabIndex));
         OnPropertyChanged(nameof(ActiveViewModel));
 
- 
+        //Context.Messenger.Register<AutoHiddenChangedMessage>(this, (recipient, message) =>
+        //{
+        //    if (recipient is DockingPaneViewModel vm)
+        //    {
+        //        // 安全にUIスレッド（または同期処理）で実行
+        //        vm.ChangeOverlay(message);
+        //    }
+        //});
     }
 
     /// <summary>
@@ -265,7 +314,12 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         ID= variableName;
         IsToolPane = isToolPane;
 
+
+
     }
+
+
+ 
 
     partial void OnSelectedTabIndexChanged(int value)
     {

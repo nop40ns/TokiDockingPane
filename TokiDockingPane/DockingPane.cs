@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using TokiDockingPane.Interfaces;
+using TokiDockingPane.Messages;
 using TokiDockingPane.Models;
 using TokiDockingPane.ViewModels;
 
@@ -51,6 +52,15 @@ public partial class DockingPane : ContentControl
 
     private Border? _tabItemBorder;
 
+    private static event Action<DockingPane> OnSelectedChanged;
+
+    [ObservableProperty] bool _isSelected = false;
+
+    partial void OnIsSelectedChanged(bool oldValue, bool newValue)
+    {
+         
+    }
+
 
 
     //static DockingPane()
@@ -77,7 +87,21 @@ public partial class DockingPane : ContentControl
         this.DragLeave += OnDockingPaneDragLeave;
         this.Drop += OnDockingPaneDrop;
 
+        this.MouseDown += MouseLeftButtonDown;
+
+        OnSelectedChanged += HandleSelectedChanged;
+
     }
+
+    private void HandleSelectedChanged(DockingPane selectedInstance)
+    {
+        // 自分以外のインスタンスなら false にする
+        if (selectedInstance != this)
+        {
+            _isSelected = false;
+        }
+    }
+
 
     public override void OnApplyTemplate()
     {
@@ -103,17 +127,32 @@ public partial class DockingPane : ContentControl
         _verticalSplitterIndicator = GetTemplateChild("PART_VerticalSplitterIndicator") as Border;
         _horizontalSplitterIndicator = GetTemplateChild("PART_HorizontalSplitterIndicator") as Border;
 
-         
+ 
 
         QueueRefreshVisualState();
     }
 
 
-   
+
+    void MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (this.DataContext is IPaneNode node)
+        {
+            Debug.WriteLine(node.ID);
+        }
+
+        OnSelectedChanged?.Invoke(this);
+
+        IsSelected = true;
+    }
+
+
+
 
     // ツール移動用のマウス座標キャッシュ変数
     private Point _toolDragStartPoint;
     private bool _isToolDragging = false;
+
 
     public void OnTabHeaderMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {

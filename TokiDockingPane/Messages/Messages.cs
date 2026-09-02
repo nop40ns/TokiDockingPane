@@ -43,7 +43,15 @@ namespace TokiDockingPane.Messages
         }
     }
 
-   
+    public class IsSelectedChangedMessage
+    {
+        public PaneContentNode SelectedNode;
+
+        public IsSelectedChangedMessage(PaneContentNode nd)
+        {
+            SelectedNode = nd;
+        }
+    }
 
 
 }
