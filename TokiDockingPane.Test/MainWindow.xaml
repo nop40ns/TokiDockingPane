@@ -32,7 +32,7 @@
     <Grid>
         <viewModels:DockingPaneViewModel 
             x:Name="DP" 
-            HedderBackground="#FF273350" />
+          />
 
         <!--HedderBackground="#FF2D2D30"-->
 

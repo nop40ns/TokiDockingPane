@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 using TokiDockingPane.Interfaces;
 using TokiDockingPane.Messages;
 using TokiDockingPane.Models;
@@ -277,10 +276,8 @@ public partial class DockingSideContext : DependencyObject
 [DependencyProperty<DockingSideContext>("BottomToolPain")]
 
 
-
-[DependencyProperty<Brush>("HedderBackground")]
-[DependencyProperty<Brush>("HedderMouseoverBackground")]
-[DependencyProperty<Brush>("HedderActiveBackground")]
+ 
+[DependencyProperty<HeaderAttr>("Header")]
 
 
 [ObservableObject]
