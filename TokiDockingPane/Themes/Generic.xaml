@@ -862,7 +862,7 @@
                         <Grid.InputBindings>
                             <!-- 左シングルクリックでCommandを呼び出す場合 -->
                             <MouseBinding MouseAction="LeftClick"  
-                                             Command="{Binding DataContext.OnClickCommand }"
+              Command="{Binding DataContext.OnClickCommand, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}"                                          
                                           />
 
                             <!-- 左ダブルクリックの場合 -->
@@ -874,12 +874,23 @@
                         <Border
                             x:Name="LeafVisual"
                             Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
+                             BorderThickness="{TemplateBinding BorderThickness}"
                             Visibility="Collapsed">
 
+                            <Border.Style>
+                                
+                                <Style TargetType="Border">
+                                    <Setter Property="BorderBrush" Value="Green" />
 
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="BorderBrush" Value="Red" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
 
+                                </Style>
+
+                            </Border.Style>
 
                             <DockPanel>
                                 <ItemsControl 
@@ -1246,7 +1257,6 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-
 
 
     </Style>

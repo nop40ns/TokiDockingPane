@@ -98,6 +98,13 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         if( SubChild != null) SubChild.ToolPainPosition = value;
     }
 
+
+    private static event Action<PaneContentNode> OnSelectedChanged;
+
+
+
+
+
     [ObservableProperty]
     TreeContext? _context;
 
@@ -108,7 +115,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         {
             if (recipient is PaneContentNode vm && vm != this)
             {
-                 IsSelected = false;
+                 _isSelected  = false;
             }
         });
 
@@ -173,9 +180,39 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
     partial void OnIsSelectedChanged(bool oldValue, bool newValue)
     {
-        Context?.Messenger.Send(new IsSelectedChangedMessage(this));
+        if (newValue && !oldValue)
+        {
+
+             if (TabViewModels == null || TabViewModels.Count() == 0) return;
+
+           // Debug.WriteLine($"ID[True]:{TabViewModels[0].Title}");
+
+            //_isSelected = true;
+            // 他のインスタンスに通知して false にさせる
+            OnSelectedChanged?.Invoke(this);
+        }
+        else if (!newValue && oldValue)
+
+        {
+
+            //if (TabViewModels == null || TabViewModels.Count() == 0) return;
+
+            //Debug.WriteLine($"ID[True=>False]:{TabViewModels[0].Title}");
+
+
+        }
     }
 
+    private void HandleSelectedChanged(PaneContentNode selectedInstance)
+    {
+        // 自分以外のインスタンスなら false にする
+        if (selectedInstance != this)
+        {
+            Debug.WriteLine($"ID[False]=>{this.ID}");
+
+            IsSelected = false;
+        }
+    }
 
 
     [RelayCommand]
@@ -293,14 +330,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
         OnPropertyChanged(nameof(SelectedTabIndex));
         OnPropertyChanged(nameof(ActiveViewModel));
 
-        //Context.Messenger.Register<AutoHiddenChangedMessage>(this, (recipient, message) =>
-        //{
-        //    if (recipient is DockingPaneViewModel vm)
-        //    {
-        //        // 安全にUIスレッド（または同期処理）で実行
-        //        vm.ChangeOverlay(message);
-        //    }
-        //});
+        OnSelectedChanged += HandleSelectedChanged;
     }
 
     /// <summary>
@@ -319,10 +349,10 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
     }
 
 
- 
 
     partial void OnSelectedTabIndexChanged(int value)
     {
+
         OnPropertyChanged(nameof(ActiveViewModel));
         OnPropertyChanged(nameof(SelectedTab)); // 念のためSelectedTabも同期
     }
