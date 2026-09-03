@@ -16,12 +16,12 @@
     <BooleanToVisibilityConverter x:Key="BoolToVis" />
 
     <!--  =========================================================================  -->
-    <!--  👑 【最外殻統治コントロール：DockingPaneViewModel の最終確定形態】  -->
+    <!--  👑 【最外殻統治コントロール：DockingPaneManager の最終確定形態】  -->
     <!--  =========================================================================  -->
-    <Style TargetType="{x:Type viewModels:DockingPaneViewModel}">
+    <Style TargetType="{x:Type viewModels:DockingPaneManager}">
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="{x:Type viewModels:DockingPaneViewModel}">
+                <ControlTemplate TargetType="{x:Type viewModels:DockingPaneManager}">
 
                     <Grid>
 
@@ -94,7 +94,7 @@
                                                 </TextBlock.LayoutTransform>
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
-                                                        <Setter Property="Background" Value="{Binding HedderBackground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}" />
+                                                        <Setter Property="Background" Value="{Binding HedderBackground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}" />
                                                         <Setter Property="Foreground" Value="White" />
                                                     </Style>
                                                 </TextBlock.Style>
@@ -171,7 +171,7 @@
                                                 </TextBlock.LayoutTransform>
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
-                                                        <Setter Property="Background" Value="{Binding HedderBackground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}" />
+                                                        <Setter Property="Background" Value="{Binding HedderBackground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}" />
                                                         <Setter Property="Foreground" Value="White" />
                                                     </Style>
                                                 </TextBlock.Style>
@@ -234,7 +234,7 @@
                                                 Text="{Binding SelectedTab.Title}">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
-                                                        <Setter Property="Background" Value="{Binding HedderBackground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}" />
+                                                        <Setter Property="Background" Value="{Binding HedderBackground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}" />
                                                         <Setter Property="Foreground" Value="White" />
                                                     </Style>
                                                 </TextBlock.Style>
@@ -307,7 +307,7 @@
                                                 Text="{Binding SelectedTab.Title}">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
-                                                        <Setter Property="Background" Value="{Binding HedderBackground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}" />
+                                                        <Setter Property="Background" Value="{Binding HedderBackground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}" />
                                                         <Setter Property="Foreground" Value="White" />
                                                     </Style>
                                                 </TextBlock.Style>
@@ -862,7 +862,7 @@
                         <Grid.InputBindings>
                             <!-- 左シングルクリックでCommandを呼び出す場合 -->
                             <MouseBinding MouseAction="LeftClick"  
-              Command="{Binding DataContext.OnClickCommand, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}"                                          
+              Command="{Binding DataContext.OnClickCommand, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"                                          
                                           />
 
                             <!-- 左ダブルクリックの場合 -->
@@ -924,7 +924,7 @@
                                                 MinWidth="80"
                                                 Margin="1,2,1,0"
                                                 Padding="10,4,6,4"
-                                                Background="{Binding HedderBackground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}"
+                                                Background="{Binding HedderBackground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"
                                                 BorderBrush="#FF3E3E42"
                                                 BorderThickness="1,1,1,0"
                                                 CornerRadius="3,3,0,0"
@@ -985,7 +985,7 @@
                                                         x:Name="PART_PinButton"
                                                         Grid.Column="2"
                                                         Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType={x:Type local:DockingPane}}}"
-                                                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneViewModel}}}"
+                                                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"
                                                         IsPinned="{Binding DataContext.IsPinned, RelativeSource={RelativeSource AncestorType={x:Type local:DockingPane}}}">
                                                         <uc:PinButton.Style>
                                                             <Style TargetType="uc:PinButton">

@@ -849,7 +849,7 @@ public partial class DockingPane : ContentControl
                 }
 
                 // 5. 【超重要】ViewModelが持っている大元のRootNodeプロパティを、新しい最外殻コンテナへ繋ぎ替える！
-                if (this.DataContext is DockingPaneViewModel mainVM)
+                if (this.DataContext is DockingPaneManager mainVM)
                 {
                     mainVM.RootDocumentNode = newOuterRoot; // ➔ ここで真の頂点アドレスが完全にすり替わります
                 }

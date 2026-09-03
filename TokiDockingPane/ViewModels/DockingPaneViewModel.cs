@@ -23,8 +23,8 @@ namespace TokiDockingPane.ViewModels;
 
 public partial class DockingSideContext : DependencyObject
 {
-    // 💡 親コントロール（DockingPaneViewModel）への参照
-    private readonly DockingPaneViewModel _parent;
+    // 💡 親コントロール（DockingPaneManager）への参照
+    private readonly DockingPaneManager _parent;
 
     // 💡 自分が「左・右・上・下」のどれなのか
     public EnumToolPainPosition Position { get; set; }
@@ -32,7 +32,7 @@ public partial class DockingSideContext : DependencyObject
     public TreeContext Context;
 
     // コンストラクタで親と位置を受け取る
-    public DockingSideContext(DockingPaneViewModel parent, TreeContext context, EnumToolPainPosition position)
+    public DockingSideContext(DockingPaneManager parent, TreeContext context, EnumToolPainPosition position)
     {
 
         _parent = parent;
@@ -281,7 +281,7 @@ public partial class DockingSideContext : DependencyObject
 
 
 [ObservableObject]
-public partial class DockingPaneViewModel : Control
+public partial class DockingPaneManager : Control
 {
 
 
@@ -289,7 +289,7 @@ public partial class DockingPaneViewModel : Control
 
     #region RootDocument
     public static readonly DependencyProperty RootDocumentNodeProperty =
-DependencyProperty.Register(nameof(RootDocumentNode), typeof(IPaneNode), typeof(DockingPaneViewModel),
+DependencyProperty.Register(nameof(RootDocumentNode), typeof(IPaneNode), typeof(DockingPaneManager),
 new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArrange | FrameworkPropertyMetadataOptions.AffectsRender, OnToolRootChanged));
 
 
@@ -332,7 +332,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
     {
 
 
-        if (d is DockingPaneViewModel vm)
+        if (d is DockingPaneManager vm)
         {
             // 1. どのプロパティ（DependencyProperty）が変わったかに応じて位置を決定
             //EnumToolPainPosition position = e.Property switch
@@ -393,11 +393,11 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
     private Border? _outerLeft;
 
 
-    static DockingPaneViewModel()
+    static DockingPaneManager()
     {
 
-        DefaultStyleKeyProperty.OverrideMetadata(typeof(DockingPaneViewModel),
-            new FrameworkPropertyMetadata(typeof(DockingPaneViewModel)));
+        DefaultStyleKeyProperty.OverrideMetadata(typeof(DockingPaneManager),
+            new FrameworkPropertyMetadata(typeof(DockingPaneManager)));
 
 
     }
@@ -456,7 +456,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
 
 
 
-    public DockingPaneViewModel()
+    public DockingPaneManager()
     {
         LeftToolPain = new(this, Context, EnumToolPainPosition.Left);
         RightToolPain = new(this, Context, EnumToolPainPosition.Right);
@@ -483,7 +483,7 @@ new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArra
 
         Context.Messenger.Register<AutoHiddenChangedMessage>(this, (recipient, message) =>
         {
-            if (recipient is DockingPaneViewModel vm)
+            if (recipient is DockingPaneManager vm)
             {
                 // 安全にUIスレッド（または同期処理）で実行
                 vm.ChangeOverlay(message);

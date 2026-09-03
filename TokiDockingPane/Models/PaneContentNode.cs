@@ -240,7 +240,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
 
 
 
-            if (parameter is DockingPaneViewModel mainVM)
+            if (parameter is DockingPaneManager mainVM)
             {
                 mainVM.AddHiddenPane(this);
             }
@@ -250,7 +250,7 @@ public partial class PaneContentNode :ObservableObject , IPaneNode
             this.IsPinned = true;
             RemoveMe();
 
-            if (parameter is DockingPaneViewModel mainVM)
+            if (parameter is DockingPaneManager mainVM)
             {
                 mainVM.RemoveHiddenPane(this);
             }
