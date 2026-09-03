@@ -107,6 +107,8 @@ public partial class MainWindow : Window
 
 
         DP.TopToolPain.BasePane = t4;
+
+        
         //DP.TopToolRoot.ToolPainPosition = EnumToolPainPosition.Top;
 
         //  DP.Refresh();

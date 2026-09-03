@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using TokiDockingPane.Interfaces;
 using TokiDockingPane.Messages;
 using TokiDockingPane.Models;
@@ -276,9 +277,30 @@ public partial class DockingSideContext : DependencyObject
 [DependencyProperty<DockingSideContext>("BottomToolPain")]
 
 
+[DependencyProperty<Brush>("HeaderForeground", DefaultValueExpression = "System.Windows.Media.Brushes.White")]
  
-[DependencyProperty<HeaderAttr>("Header")]
 
+[DependencyProperty<Brush>("HeaderBackground",
+    DefaultValueExpression = 
+    "new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(\"#F0F8FF\"))"
+    )]
+[DependencyProperty<FontWeight>("HeaderFontWeight", DefaultValueExpression = "System.Windows.FontWeights.Normal")]
+[DependencyProperty<FontStyle>("HeaderFontStyle")]
+
+[DependencyProperty<Brush>("HeaderMouseoverForeground")]
+[DependencyProperty<Brush>("HeaderMouseoverBackground")]
+[DependencyProperty<FontWeight>("HeaderMouseoverFontWeight")]
+[DependencyProperty<FontStyle>("HeaderMouseoverFontStyle")]
+
+[DependencyProperty<Brush>("HeaderSelectedForeground")]
+[DependencyProperty<Brush>("HeaderSelectedBackground")]
+[DependencyProperty<FontWeight>("HeaderSelectedFontWeight")]
+[DependencyProperty<FontStyle>("HeaderSelectedFontStyle")]
+
+[DependencyProperty<Brush>("SplittersColor", DefaultValueExpression = "System.Windows.Media.Brushes.Red")]
+
+[DependencyProperty<Brush>("PanesBorderColor", DefaultValueExpression = "System.Windows.Media.Brushes.LightGray")]
+[DependencyProperty<Brush>("PanesBorderSelectedColor", DefaultValueExpression = "System.Windows.Media.Brushes.AliceBlue")]
 
 [ObservableObject]
 public partial class DockingPaneManager : Control

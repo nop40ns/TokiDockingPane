@@ -365,7 +365,7 @@
                                     <!--  ★上スプリッター（マウスカーソルを上下矢印「SizeNS」にします）  -->
                                     <cc:DockPanelSplitter
                                         Height="4"
-                                        Background="DarkGray"
+                                        Background="{Binding SplittersColor, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"
                                         Cursor="SizeNS"
                                         DockPanel.Dock="Top"
                                         Visibility="{Binding TopToolPain.IsSplitterVisible, Converter={StaticResource BoolToVis}, RelativeSource={RelativeSource TemplatedParent}}" />
@@ -395,7 +395,7 @@
                                     <!--  ★下スプリッター  -->
                                     <cc:DockPanelSplitter
                                         Height="4"
-                                        Background="DarkGray"
+                                        Background="{Binding SplittersColor, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"
                                         Cursor="SizeNS"
                                         DockPanel.Dock="Bottom"
                                         Visibility="{Binding BottomToolPain.IsSplitterVisible, Converter={StaticResource BoolToVis}, RelativeSource={RelativeSource TemplatedParent}}" />
@@ -462,7 +462,7 @@
                                     <!--  ★右スプリッター  -->
                                     <cc:DockPanelSplitter
                                         Width="4"
-                                        Background="DarkGray"
+                                        Background="{Binding SplittersColor, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"
                                         Cursor="SizeWE"
                                         DockPanel.Dock="Right"
                                         Visibility="{Binding RightToolPain.IsSplitterVisible, Converter={StaticResource BoolToVis}, RelativeSource={RelativeSource TemplatedParent}}" />
@@ -623,6 +623,7 @@
                                         Grid.Column="1"
                                         Width="4"
                                         HorizontalAlignment="Stretch"
+                                        Background="{Binding SplittersColor, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"
                                         Visibility="{Binding LeftToolPain.IsHiddnVisible, Converter={StaticResource BoolToVis}, RelativeSource={RelativeSource TemplatedParent}}" />
                                 </Grid>
 
@@ -665,6 +666,7 @@
                                         Grid.Column="1"
                                         Width="4"
                                         HorizontalAlignment="Stretch"
+                                        Background="{Binding SplittersColor, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"
                                         Visibility="{Binding RightToolPain.IsHiddnVisible, Converter={StaticResource BoolToVis}, RelativeSource={RelativeSource TemplatedParent}}" />
                                 </Grid>
                                 <!--
@@ -703,6 +705,7 @@
                                         Grid.Row="1"
                                         Height="4"
                                         HorizontalAlignment="Stretch"
+                                        Background="{Binding SplittersColor, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"
                                         Visibility="{Binding TopToolPain.IsHiddnVisible, Converter={StaticResource BoolToVis}, RelativeSource={RelativeSource TemplatedParent}}" />
                                 </Grid>
 
@@ -743,6 +746,7 @@
                                         Grid.Row="1"
                                         Height="4"
                                         HorizontalAlignment="Stretch"
+                                        Background="{Binding SplittersColor, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"
                                         Visibility="{Binding BottomToolPain.IsHiddnVisible, Converter={StaticResource BoolToVis}, RelativeSource={RelativeSource TemplatedParent}}" />
                                 </Grid>
                             </Grid>
@@ -849,23 +853,18 @@
     <!--  =========================================================================  -->
     <Style TargetType="{x:Type local:DockingPane}">
         <Setter Property="Background" Value="#FF1E1E1E" />
-        <Setter Property="BorderBrush" Value="LightGray" />
+        <Setter Property="BorderBrush" Value="{Binding PanesBorderColor, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}" />
+
         <Setter Property="BorderThickness" Value="3" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type local:DockingPane}">
-                    <Grid Visibility="{Binding IsAutoHidden, Converter={StaticResource TrueToCollapsedConverter}}"
-                         
-                          
-                          >
-
+                    <Grid Visibility="{Binding IsAutoHidden, Converter={StaticResource TrueToCollapsedConverter}}">
                         <Grid.InputBindings>
-                            <!-- 左シングルクリックでCommandを呼び出す場合 -->
-                            <MouseBinding MouseAction="LeftClick"  
-              Command="{Binding DataContext.OnClickCommand, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"                                          
-                                          />
+                            <!--  左シングルクリックでCommandを呼び出す場合  -->
+                            <MouseBinding Command="{Binding DataContext.OnClickCommand, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}" MouseAction="LeftClick" />
 
-                            <!-- 左ダブルクリックの場合 -->
+                            <!--  左ダブルクリックの場合  -->
                             <!-- <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding MyDoubleClickCommand}" /> -->
                         </Grid.InputBindings>
 
@@ -874,17 +873,17 @@
                         <Border
                             x:Name="LeafVisual"
                             Background="{TemplateBinding Background}"
-                             BorderThickness="{TemplateBinding BorderThickness}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
                             Visibility="Collapsed">
 
                             <Border.Style>
-                                
+
                                 <Style TargetType="Border">
-                                    <Setter Property="BorderBrush" Value="Green" />
+                                    <Setter Property="BorderBrush" Value="{Binding PanesBorderColor, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}" />
 
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                            <Setter Property="BorderBrush" Value="Red" />
+                                            <Setter Property="BorderBrush" Value="{Binding PanesBorderSelectedColor, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}" />
                                         </DataTrigger>
                                     </Style.Triggers>
 
@@ -893,8 +892,7 @@
                             </Border.Style>
 
                             <DockPanel>
-                                <ItemsControl 
-                                    
+                                <ItemsControl
                                     x:Name="PART_TabHeader"
                                     Background="#FF2D2D30"
                                     DockPanel.Dock="Top"
@@ -924,11 +922,22 @@
                                                 MinWidth="80"
                                                 Margin="1,2,1,0"
                                                 Padding="10,4,6,4"
-                                                Background="{Binding HedderBackground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"
+                                            
                                                 BorderBrush="#FF3E3E42"
                                                 BorderThickness="1,1,1,0"
                                                 CornerRadius="3,3,0,0"
                                                 Cursor="Hand">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background"  Value="{Binding HeaderBackground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"/>
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Background"  Value="{Binding HeaderMouseoverBackground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"/>
+
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
 
                                                 <Grid VerticalAlignment="Center">
                                                     <Grid.ColumnDefinitions>
@@ -941,7 +950,7 @@
                                                         HorizontalAlignment="Left"
                                                         VerticalAlignment="Center"
                                                         FontSize="12"
-                                                        Foreground="#FFDFDFDF"
+                                                        Foreground="{Binding HeaderForeground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"
                                                         Text="{Binding Title}"
                                                         ToolTip="{Binding Title}" />
                                                     <Button
@@ -966,7 +975,7 @@
                                                                         HorizontalAlignment="Center"
                                                                         VerticalAlignment="Center"
                                                                         Data="M3,3 L11,11 M11,3 L3,11"
-                                                                        Stroke="#FF999999"
+                                                                        Stroke="{Binding HeaderForeground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"
                                                                         StrokeThickness="1.2" />
                                                                 </Border>
                                                                 <ControlTemplate.Triggers>
@@ -987,9 +996,12 @@
                                                         Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType={x:Type local:DockingPane}}}"
                                                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"
                                                         IsPinned="{Binding DataContext.IsPinned, RelativeSource={RelativeSource AncestorType={x:Type local:DockingPane}}}">
+
+
                                                         <uc:PinButton.Style>
                                                             <Style TargetType="uc:PinButton">
                                                                 <Setter Property="Visibility" Value="Collapsed" />
+                                                                <Setter Property="Foreground" Value="{Binding HeaderForeground, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}" />
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding DataContext.IsToolPane, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" Value="True">
 
@@ -1138,8 +1150,9 @@
                                 Grid.Column="1"
                                 Width="4"
                                 HorizontalAlignment="Stretch"
-                                Background="#FF3E3E42"
+                                Background="{Binding SplittersColor, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"
                                 ShowsPreview="False" />
+
                             <ContentPresenter Grid.Column="2" Content="{Binding SubChild}" />
                             <Border
                                 x:Name="PART_VerticalSplitterIndicator"
@@ -1148,8 +1161,8 @@
                                 Margin="-22,0,-22,0"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Stretch"
-                                Background="#440000CC"
-                                BorderBrush="#FF007ACC"
+                                Background="{Binding PanesBorderColor, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"
+                                BorderBrush="{Binding PanesBorderSelectedColor, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"
                                 BorderThickness="1,0,1,0"
                                 IsHitTestVisible="True"
                                 Visibility="Collapsed">
@@ -1172,7 +1185,7 @@
                                 Height="4"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Stretch"
-                                Background="#FF3E3E42"
+                                Background="{Binding SplittersColor, RelativeSource={RelativeSource AncestorType={x:Type viewModels:DockingPaneManager}}}"
                                 ShowsPreview="False" />
                             <ContentPresenter Grid.Row="2" Content="{Binding SubChild}" />
 
